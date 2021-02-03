@@ -9,12 +9,16 @@ class Segment():
   timeEnd = 0
   names = []
   q = []
+  c = []
 
   def __init__(self, timeStart, names, q):
     self.timeStart = int(timeStart)
     self.names = names
     self.q = q
     self.timeEnd = q.shape[0] + self.timeStart
+
+  def setColor(self, c):
+    self.c = c
 
   def getPoses(self, time, name):
     if time < self.timeStart or time > self.timeEnd:
@@ -27,6 +31,14 @@ class Segment():
         ctr = k
         break
     return self.q[time-self.timeStart, ctr]
+
+  def getColor(self, name):
+    ctr = 0
+    for k in range(0,len(self.names)):
+      if name == self.names[k]:
+        ctr = k
+        break
+    return self.c[ctr]
 
 
 class Anim():
@@ -70,8 +82,24 @@ class Anim():
         framename = p.group(2)
         names = framename.split(" ")
 
+        ## EXTRACT FRAME COLORS
+        line = f.readline()
+        if not line:
+          print("Unknown error")
+          break
+        p = re.match(r'^frameColors.*<(.*)>', line)
+        dims = np.fromstring(p.group(1), dtype='int', sep=' ')
+        numColors = dims[0]
+        numColorDims = dims[1]
+        c = []
+        for i in range(0,numColors):
+          ck = np.fromstring(f.readline(), dtype='float', sep=' ')
+          c.append(ck)
+          #empty line
+
         ## EXTRACT POSES
         line = f.readline()
+        print(line)
         if not line:
           print("Unknown error")
           break
@@ -91,6 +119,7 @@ class Anim():
           f.readline()
         q = np.array(q)
         s = Segment(timeStart, names, q)
+        s.setColor(c)
         self.segments.append(s)
         ctrSegments = ctrSegments + 1
 
