@@ -4,6 +4,8 @@ import numpy as np
 from math import *
 from mathutils import *
 
+from Material import *
+
 distanceCamera = 35
 cameraFocusPoint = Vector((0,-8,-7))
 offsetAnnulusLeft = Vector((-3, +1, -15))
@@ -22,6 +24,7 @@ circleThickness = 0.3
 minor_radius = 2
 major_radius = 5
 
+
 materialGreen = bpy.data.materials.new(name="Green")
 materialGreen.diffuse_color = (0.0, 1.0, 0.0, 1.0)
 materialGreen.metallic = 0.0
@@ -33,6 +36,10 @@ materialMagenta.metallic = 0.9
 materialMagenta.specular_intensity = 0.9
 # materialMagenta.blend_method = "BLEND"
 # materialMagenta.use_transparency = True #  renders trans
+
+def getVectorNorm(v):
+  n = v.dot(v)
+  return np.sqrt(n)
 
 def arrow_mesh(position, length, width=-1, headlength=-1, headwidth = -1):
     verts = []
@@ -327,7 +334,9 @@ def addStateAnnulus(x_1, name, color=(1.0, 1.0, 1.0, 1.0), offset = offsetAnnulu
 def addLightSourceSun(location):
 
     light_data = bpy.data.lights.new(name="light_2.80", type='SUN')
-    light_data.energy = 10
+    light_data.energy = 12
+    light_data.angle = 5
+    light_data.specular_factor = 0.9
     light_object = bpy.data.objects.new(name="light_2.80",
       object_data=light_data)
     bpy.context.collection.objects.link(light_object)
@@ -350,7 +359,8 @@ def addCamera(location, focus=cameraFocusPoint):
     cam_ob.location = location
     bpy.context.scene.camera = cam_ob
     bpy.context.view_layer.objects.active = cam_ob
-    update_camera(cam_ob, focus_point=focus, distance=distanceCamera)
+    distance = getVectorNorm(location - focus)
+    update_camera(cam_ob, focus_point=focus, distance=distance)
     return cam
 
 #V is the major circle coordinate, U is the minor circle
@@ -444,4 +454,85 @@ def addTorus(position, offset=-0.1):
     torus_obj.data.materials.append(materialMagenta)
     # torus_obj.show_transparent = True #  displays trans in viewport
 
+def addComicOutlineObject(obj):
+  #obj = context.object
+  mat = bpy.data.materials["Material"]
+  obj.data.materials.append(mat)
+
+  mat.use_backface_culling = True
+
+  #remove surface
+  node_to_delete =  mat.node_tree.nodes['Principled BSDF']
+  mat.node_tree.nodes.remove( node_to_delete )
+
+  #add solidifer outline
+  solidifier = obj.modifiers.new(name="Solidify", type='SOLIDIFY')
+  solidifier.thickness = -0.03
+  solidifier.use_flip_normals = True
+  solidifier.use_rim = False
+
+  ## TBD
+  solidifier.material_offset = 1
+  # solidifier.material_offset_rim = 1
+  # bpy.ops.object.mode_set(mode='EDIT')
+  # bpy.ops.mesh.edge_split()
+  # bpy.ops.mesh.separate(type='LOOSE')
+  # bpy.ops.object.mode_set()
+  # bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY')
+
+
+##https://blender.stackexchange.com/questions/157898/blender-2-8-python-how-do-i-find-my-material-output-node-and-assign-displacem
+
+materialConcrete = Material("/home/aorthey/git/blender/textures/concrete.jpeg")
+materialWood = Material("/home/aorthey/git/blender/textures/wood_texture.jpg")
+# materialConcrete = bpy.data.materials.new(name="Texture")
+# # materialTexture.diffuse_color = (1.0, 1.0, 1.0, 1.0)
+# materialConcrete.metallic = 0.0
+# materialConcrete.specular_intensity = 0.0
+# materialConcrete.use_nodes = True
+# bsdf = materialConcrete.node_tree.nodes["Principled BSDF"]
+# texImage = materialConcrete.node_tree.nodes.new('ShaderNodeTexImage')
+# texImage.image.filename = "/home/aorthey/git/blender/textures/concrete.jpeg"
+# materialConcrete.node_tree.links.new(bsdf.inputs['Base Color'], texImage.outputs['Color'])
+
+# materialWood = Material("/home/aorthey/git/blender/textures/wood_texture.jpg")
+# materialStainlessSteel = Material("/home/aorthey/git/blender/textures/stainless_steel.png")
+
+def addMaterialConcrete(obj):
+  return addTextureMaterial(obj, materialConcrete.material)
+def addMaterialWood(obj, color):
+  return addTextureMaterial(obj, materialWood.material)
+def addMaterialColor(obj, color):
+  if obj is None or obj.data is None:
+    return
+  material = MaterialColor(color).material
+  if obj.data.materials:
+      obj.data.materials[0] = material
+  else:
+      obj.data.materials.append(material)
+  obj.active_material = material
+
+def addTextureMaterial(obj, material):
+    if obj is None or obj.data is None:
+      return
+
+    # Assign it to object
+    if obj.data.materials:
+        obj.data.materials[0] = material
+    else:
+        obj.data.materials.append(material)
+
+    obj.active_material = material
+
+    bpy.ops.object.select_all(action='DESELECT')
+    obj.select_set(True)
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.uv.smart_project()
+    bpy.ops.object.mode_set(mode='OBJECT')
+    bpy.ops.object.select_all(action='SELECT')
+
+    # obj.editmode_toggle()
+    # bpy.ops.uv.smart_project(angle_limit=66, island_margin = 0.02)
+    # obj.editmode_toggle()
 

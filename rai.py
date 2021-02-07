@@ -8,13 +8,20 @@ sys.path.append(dirname)
 from bpy_utils import *
 from Anim import *
 
-# cameraLocation = Vector((+3,-1.5,+2.5))
-# cameraFocusPoint = Vector((0,0,0))
-cameraLocation = Vector((+0,-15,+15))
+########################################################
+# CUSTOM SETTINGS
+########################################################
+Nsegments = -1 #display N segments. -1: display all segments
+NkeyframeSteps = 10 #use every n-th keyframe, interpolate inbetween
+renderAnimation = False
+########################################################
+
+cameraLocation = Vector((+3,-9,+5))
 cameraFocusPoint = Vector((0,0,0))
 
 fname = os.path.abspath(dirname+"/data/initial.dae")
 
+## delete all previous objects in scene
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.object.delete()
 
@@ -24,8 +31,10 @@ c = bpy.ops.wm.collada_import(filepath=fname, import_units=True,
 ## SELECT ALL OBJECTS IN BLENDER
 bpy.ops.object.select_all(action='SELECT')
 
+objs = bpy.context.selected_objects
+
 A = Anim("data/Anim.txt")
-for obj in bpy.context.selected_objects:
+for obj in objs:
   if obj.name == "plate":
     bpy.context.scene.frame_set(0)
     obj.location = [0,0,0]
@@ -34,20 +43,28 @@ for obj in bpy.context.selected_objects:
     obj.parent = None
     obj.keyframe_insert(data_path="location", index=-1)
     obj.keyframe_insert(data_path="rotation_quaternion", index=-1)
+    addMaterialConcrete(obj)
+
+bpy.ops.object.select_all(action='SELECT')
 
 ctr = 0
+bpy.context.scene.frame_start = 0
+bpy.context.scene.frame_end = 0
 for segment in A.segments:
-  # if ctr > 2: 
-  #   break
+  if ctr > Nsegments and Nsegments >= 0:
+    break
   ctr = ctr + 1
   for n in range(0,len(segment.names)):
     name = segment.names[n]
+    if segment.timeEnd > bpy.context.scene.frame_end:
+      bpy.context.scene.frame_end = segment.timeEnd
     print("Importing segment %d/%d (link %d/%d)"%(ctr,len(A.segments),n,len(segment.names)))
     for obj in bpy.context.selected_objects:
       if obj.name == name and "coll" not in name:
         ## FOUND match between collada object and Anim object for current segment
-        for t in range(segment.timeStart, segment.timeEnd, 10):
+        for t in range(segment.timeStart, segment.timeEnd, NkeyframeSteps):
           pose = segment.getPoses(t, name)
+          color = segment.getColor(name)
           bpy.context.scene.frame_set(t)
           obj.location = pose[0:3]
           obj.rotation_mode = 'QUATERNION'
@@ -55,6 +72,7 @@ for segment in A.segments:
           obj.parent = None
           obj.keyframe_insert(data_path="location", index=-1)
           obj.keyframe_insert(data_path="rotation_quaternion", index=-1)
+          addMaterialColor(obj, color)
 
 filename = "animation"
 
@@ -70,20 +88,24 @@ filename = "animation"
 # bpy.context.scene.camera.matrix_world = rot_quat @ camera_roll
 # bpy.context.scene.camera.location = cameraLocation
 
-addLightSourceSun(Vector((0,0,+10)))
+lightLocation = 0.3*(cameraLocation-cameraFocusPoint)+Vector((0,0,+5))
+addLightSourceSun(lightLocation)
 
 addCamera(cameraLocation, cameraFocusPoint)
 
-### RENDERING 
-# bpy.context.scene.render.film_transparent = True
-# bpy.context.scene.render.image_settings.color_mode = 'RGBA'
+## set view to camera
+for area in bpy.context.screen.areas:
+  if area.type == 'VIEW_3D':
+    area.spaces[0].region_3d.view_perspective = 'CAMERA'
+    break
 
-# bpy.context.scene.render.filepath = dirname+"/"+filename+'.png'
+renderEngine = bpy.context.scene.render
+renderEngine.image_settings.file_format = "FFMPEG"
+renderEngine.ffmpeg.format = "MPEG4"
+renderEngine.ffmpeg.codec = "H264"
+renderEngine.ffmpeg.constant_rate_factor = "HIGH" #MEDIUM, LOW
+renderEngine.filepath = dirname+"/"+filename+".mp4"
 
-# bpy.ops.render.render(write_still = True)
-
-# ff = bpy.context.scene.render.filepath
-# os.system("convert -trim %s %s"%(ff,ff))
-
-# print(bpy.context.scene.render.filepath)
-
+### Render Animation to MP4 video
+# if renderAnimation:
+#   bpy.ops.render.render(animation=True)
