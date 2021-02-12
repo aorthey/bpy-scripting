@@ -21,9 +21,10 @@ class Segment():
     self.c = c
 
   def getPoses(self, time, name):
-    if time < self.timeStart or time > self.timeEnd:
-      print("Cannot access segment at time %d of segment [%d,%d]"%(time,
-        timeStart,timeEnd))
+    if time < self.timeStart:
+      time = self.timeStart
+    if time > self.timeEnd:
+      time = self.timeEnd
 
     ctr = 0
     for k in range(0,len(self.names)):

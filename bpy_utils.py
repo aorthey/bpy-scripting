@@ -24,11 +24,31 @@ circleThickness = 0.3
 minor_radius = 2
 major_radius = 5
 
-
 materialGreen = bpy.data.materials.new(name="Green")
 materialGreen.diffuse_color = (0.0, 1.0, 0.0, 1.0)
 materialGreen.metallic = 0.0
 materialGreen.specular_intensity = 0.0
+
+purplePosy = (236/256.0, 223/256.0, 237/256.0, 1.0)
+rococoRose = (221/256.0, 146/256.0, 155/256.0, 1.0)
+seasideSpray = (183/256.0, 204/256.0, 226/256.0, 1.0)
+
+blushingBride = (249/256.0, 194/256.0, 188/256.0, 1.0) #cherry red
+calypsoCoral = (241/256.0, 116/256.0, 91/256.0, 1.0) #calypso red
+petalPink = (252/256.0, 206/256.0, 182/256.0, 1.0) #pink-ish
+soSaflron = (255/256.0, 218/256.0, 141/256.0, 1.0) #yellow-ish
+softSeaFoam = (234/256.0, 241/256.0, 213/256.0, 1.0) #soft green-ish
+pearPizzazz = (184/256.0, 192/256.0, 104/256.0, 1.0) #dark green-ish
+mintMacaron = (159/256.0, 197/256.0, 170/256.0, 1.0) #mint-ish
+poolParty = (171/256.0, 217/256.0, 213/256.0, 1.0) #aqua green-ish
+balmyBlue = (169/256.0, 214/256.0, 235/256.0, 1.0) #blue-ish
+highlandHeather = (173/256.0, 153/256.0, 200/256.0, 1.0)  #magenta-ish
+
+##https://machsdirschoen.info/wp-content/uploads/2019/05/Stampin-Up-Farbencodes-RGB-HEX-05_2019.pdf
+materialRose = bpy.data.materials.new(name="RococoRose")
+materialRose.diffuse_color = blushingBride
+materialRose.metallic = 0.0
+materialRose.specular_intensity = 0.1
 
 materialMagenta = bpy.data.materials.new(name="Magenta")
 materialMagenta.diffuse_color = (0.205, 0.0, 0.37, 1.0)
@@ -335,8 +355,8 @@ def addLightSourceSun(location):
 
     light_data = bpy.data.lights.new(name="light_2.80", type='SUN')
     light_data.energy = 12
-    light_data.angle = 5
-    light_data.specular_factor = 0.9
+    light_data.angle = 20/180.0
+    light_data.specular_factor = 0.8
     light_object = bpy.data.objects.new(name="light_2.80",
       object_data=light_data)
     bpy.context.collection.objects.link(light_object)
@@ -483,7 +503,7 @@ def addComicOutlineObject(obj):
 
 ##https://blender.stackexchange.com/questions/157898/blender-2-8-python-how-do-i-find-my-material-output-node-and-assign-displacem
 
-materialConcrete = Material("/home/aorthey/git/blender/textures/concrete.jpeg")
+materialConcrete = Material("/home/aorthey/git/blender/textures/darkconcrete.jpg")
 materialWood = Material("/home/aorthey/git/blender/textures/wood_texture.jpg")
 # materialConcrete = bpy.data.materials.new(name="Texture")
 # # materialTexture.diffuse_color = (1.0, 1.0, 1.0, 1.0)
@@ -498,8 +518,56 @@ materialWood = Material("/home/aorthey/git/blender/textures/wood_texture.jpg")
 # materialWood = Material("/home/aorthey/git/blender/textures/wood_texture.jpg")
 # materialStainlessSteel = Material("/home/aorthey/git/blender/textures/stainless_steel.png")
 
+def addBezierCurve(name, N =20, thickness=0.02):
+  curve = bpy.data.curves.new(name="Trailblazer"+name, type='CURVE')
+  curve.dimensions = '3D'
+  curveObject = bpy.data.objects.new("path", curve)
+  curveObject.location = (0,0,0)
+
+  ### create milestones
+  polyline = curve.splines.new('POLY')
+
+  polyline.points.add(N)
+  for p in polyline.points:
+    p.co = (0, 0, 0, 1)
+
+  bpy.context.collection.objects.link(curveObject)
+
+  curve.fill_mode = 'FULL'
+  curve.bevel_depth = thickness
+
+  #materialRose.use_nodes=True
+  #nodes = materialRose.node_tree.nodes
+  #for node in nodes:
+  #  nodes.remove(node)
+  #links = materialRose.node_tree.links
+
+  ##create the basic material nodes
+  #node_output  = nodes.new(type='ShaderNodeOutputMaterial')
+  #node_output.location = 400,0
+  #node_pbsdf    = nodes.new(type='ShaderNodeBsdfPrincipled')
+  #node_pbsdf.location = 0,0
+  #node_pbsdf.inputs['Base Color'].default_value = seasideSpray
+  #node_pbsdf.inputs['Alpha'].default_value = 1 # 1 is opaque, 0 is invisible
+  #node_pbsdf.inputs['Roughness'].default_value = 0.2
+  #node_pbsdf.inputs['Specular'].default_value = 0.5
+  #node_pbsdf.inputs['Transmission'].default_value = 0.5 # 1 is fully transparent
+
+  #link = links.new(node_pbsdf.outputs['BSDF'], node_output.inputs['Surface'])
+
+  #materialRose.blend_method = 'HASHED'
+  #materialRose.shadow_method = 'HASHED'
+  #materialRose.use_screen_refraction = True
+  #bpy.context.scene.eevee.use_ssr = True
+  #bpy.context.scene.eevee.use_ssr_refraction = True
+
+  curveObject.data.materials.append(materialRose)
+  curveObject.show_transparent = True
+  return curveObject
+
 def addMaterialConcrete(obj):
   return addTextureMaterial(obj, materialConcrete.material)
+
 def addMaterialWood(obj, color):
   return addTextureMaterial(obj, materialWood.material)
 def addMaterialColor(obj, color):
