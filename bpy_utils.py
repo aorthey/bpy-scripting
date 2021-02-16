@@ -354,8 +354,8 @@ def addStateAnnulus(x_1, name, color=(1.0, 1.0, 1.0, 1.0), offset = offsetAnnulu
 def addLightSourceSun(location):
 
     light_data = bpy.data.lights.new(name="light_2.80", type='SUN')
-    light_data.energy = 12
-    light_data.angle = 20/180.0
+    light_data.energy = 5
+    light_data.angle = 0 #20/180.0
     light_data.specular_factor = 0.8
     light_object = bpy.data.objects.new(name="light_2.80",
       object_data=light_data)

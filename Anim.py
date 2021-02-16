@@ -3,6 +3,34 @@ import sys, os
 import re
 
 
+colorDataBase = {
+"purplePosy " :  (236/256.0, 223/256.0, 237/256.0, 1.0)
+,"rococoRose " :  (221/256.0, 146/256.0, 155/256.0, 1.0)
+,"seasideSpray " :  (183/256.0, 204/256.0, 226/256.0, 1.0)
+,"blushingBride " :  (249/256.0, 194/256.0, 188/256.0, 1.0) #cherry red
+,"calypsoCoral " :  (241/256.0, 116/256.0, 91/256.0, 1.0) #calypso red
+,"petalPink " :  (252/256.0, 206/256.0, 182/256.0, 1.0) #pink-ish
+,"soSaflron " :  (255/256.0, 218/256.0, 141/256.0, 1.0) #yellow-ish
+,"softSeaFoam " :  (234/256.0, 241/256.0, 213/256.0, 1.0) #soft green-ish
+,"pearPizzazz " :  (184/256.0, 192/256.0, 104/256.0, 1.0) #dark green-ish
+,"mintMacaron " :  (159/256.0, 197/256.0, 170/256.0, 1.0) #mint-ish
+,"poolParty " :  (171/256.0, 217/256.0, 213/256.0, 1.0) #aqua green-ish
+,"balmyBlue " :  (169/256.0, 214/256.0, 235/256.0, 1.0) #blue-ish
+,"highlandHeather " :  (173/256.0, 153/256.0, 200/256.0, 1.0)  #magenta-ish
+}
+
+def projectColor(color):
+  bestDistance = float('inf')
+  nearestColor = color
+  for cname in colorDataBase:
+    cdb = colorDataBase[cname]
+    d = np.linalg.norm(color - cdb)
+    if d < bestDistance:
+      bestDistance = d
+      nearestColor = cdb
+
+  return nearestColor
+
 class Segment():
 
   timeStart = 0
@@ -39,7 +67,10 @@ class Segment():
       if name == self.names[k]:
         ctr = k
         break
-    return self.c[ctr]
+    color = self.c[ctr]
+    pcolor = projectColor(color)
+
+    return pcolor
 
 
 class Anim():

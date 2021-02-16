@@ -7,27 +7,41 @@ sys.path.append(dirname)
 
 from bpy_utils import *
 from Anim import *
+from Camera import *
+
+########################################################
+# TODO
+########################################################
+
+#[ ] Visualize scheduler as guitar hero 
+#[ ] Better visualization of frame paths
+#[x] Project Color onto nearest Pastell Color
+#[x] Background color
 
 ########################################################
 # CUSTOM SETTINGS
 ########################################################
-Nsegments = -1 #display N segments. -1: display all segments
-NkeyframeSteps = 1 #use every n-th keyframe, interpolate inbetween
-renderAnimation = False
-fname = os.path.abspath(dirname+"/data/20210211_2042/initial.dae")
-A = Anim("data/20210211_2042/Anim.txt")
-# fname = os.path.abspath(dirname+"/data/initial.dae")
-# A = Anim("data/Anim.txt")
+Nsegments = 2 #display N segments. -1: display all segments
+NkeyframeSteps = 20 #use every n-th keyframe, interpolate inbetween
+renderAnimation = True
+# renderAnimation = False
+folder = "data/animations/20210215_141740/"
+folder = "data/animations/20210216_001730/"
+cameraLocation = Vector((-6,-12,+5))
+cameraFocusPoint = Vector((0,0,0))
 ########################################################
 
-cameraLocation = Vector((-3,-6,+3))
-cameraFocusPoint = Vector((0,0,0))
+fname = os.path.abspath(dirname+"/" + folder + "initial.dae")
+A = Anim(folder + "/Anim.txt")
+
+# cameraLocation = Vector((-1.5,-3,+1.5))
 
 ## delete all previous objects in scene
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.object.delete()
 
 c = bpy.ops.wm.collada_import(filepath=fname, import_units=True, auto_connect=False)
+
 
 ## SELECT ALL OBJECTS IN BLENDER
 bpy.ops.object.select_all(action='SELECT')
@@ -48,7 +62,19 @@ for obj in objs:
     obj.parent = None
     obj.keyframe_insert(data_path="location", index=-1)
     obj.keyframe_insert(data_path="rotation_quaternion", index=-1)
-    addMaterialConcrete(obj)
+    # addMaterialConcrete(obj)
+    addMaterialColor(obj, (0.8,0.8,0.8,1.0))
+
+### SET BACKGROUND COLOR OF SCENE
+world = bpy.context.scene.world
+if world is None:
+  new_world = bpy.data.worlds.new("New World")
+  world = new_world
+
+world.use_nodes = True
+bg = world.node_tree.nodes['Background']
+bg.inputs[0].default_value[:3] = (.7, .7, .7)
+bg.inputs[1].default_value = 1.0
 
 bpy.ops.object.select_all(action='SELECT')
 
@@ -96,6 +122,7 @@ for segment in A.segments:
           addMaterialColor(obj, color)
           if "gripper" in obj.name:
             P = curves[obj.name].data.splines[0].points
+            addMaterialColor(curves[obj.name], color)
             L = len(P)
             for ctrPts in range(0, L):
               tval = t - ctrPts
@@ -144,10 +171,25 @@ for segment in A.segments:
 
 filename = "animation"
 
+###############################################################################
+## LIGHTNING
+###############################################################################
 lightLocation = 0.3*(cameraLocation-cameraFocusPoint)+Vector((0,0,+5))
 addLightSourceSun(lightLocation)
 
-addCamera(cameraLocation, cameraFocusPoint)
+###############################################################################
+## CAMERA
+###############################################################################
+tend = bpy.context.scene.frame_end
+camera = Camera(cameraLocation, cameraFocusPoint)
+#0:0,pick 141,place 56,retract 53;252,pick 48,place 307,retract 52;
+
+#TODO: zoom in/out to specific distance
+distance = copy.copy(camera.distance)
+camera.zoomIn(141, 141+56)
+camera.zoomOut(141+56+20, 252)
+camera.rotate(253, tend)
+# camera.zoomOut(210,400)
 
 ## set view to camera
 for area in bpy.context.screen.areas:
@@ -155,6 +197,9 @@ for area in bpy.context.screen.areas:
     area.spaces[0].region_3d.view_perspective = 'CAMERA'
     break
 
+###############################################################################
+## RENDERING
+###############################################################################
 renderEngine = bpy.context.scene.render
 renderEngine.image_settings.file_format = "FFMPEG"
 renderEngine.ffmpeg.format = "MPEG4"
