@@ -2,6 +2,7 @@ import bpy
 import bmesh
 import numpy as np
 import sys, os 
+import re
 dirname = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(dirname)
 
@@ -21,12 +22,13 @@ from Camera import *
 ########################################################
 # CUSTOM SETTINGS
 ########################################################
-Nsegments = 2 #display N segments. -1: display all segments
-NkeyframeSteps = 20 #use every n-th keyframe, interpolate inbetween
+Nsegments = -1 #display N segments. -1: display all segments
+NkeyframeSteps = 1 #use every n-th keyframe, interpolate inbetween
 renderAnimation = True
 # renderAnimation = False
 folder = "data/animations/20210215_141740/"
 folder = "data/animations/20210216_001730/"
+folder = "data/animations/20210216_204609/"
 cameraLocation = Vector((-6,-12,+5))
 cameraFocusPoint = Vector((0,0,0))
 ########################################################
@@ -63,7 +65,7 @@ for obj in objs:
     obj.keyframe_insert(data_path="location", index=-1)
     obj.keyframe_insert(data_path="rotation_quaternion", index=-1)
     # addMaterialConcrete(obj)
-    addMaterialColor(obj, (0.8,0.8,0.8,1.0))
+    addMaterialColor(obj, (0.6,0.6,0.6,1.0))
 
 ### SET BACKGROUND COLOR OF SCENE
 world = bpy.context.scene.world
@@ -73,7 +75,7 @@ if world is None:
 
 world.use_nodes = True
 bg = world.node_tree.nodes['Background']
-bg.inputs[0].default_value[:3] = (.7, .7, .7)
+bg.inputs[0].default_value[:3] = (.2, .2, .2)
 bg.inputs[1].default_value = 1.0
 
 bpy.ops.object.select_all(action='SELECT')
@@ -119,7 +121,14 @@ for segment in A.segments:
           obj.parent = None
           obj.keyframe_insert(data_path="location", index=-1)
           obj.keyframe_insert(data_path="rotation_quaternion", index=-1)
-          addMaterialColor(obj, color)
+
+
+          pattern = r"^b[0-9]"
+          if re.match(pattern, obj.name):
+            addMaterialGlass(obj)
+          else:
+            addMaterialColor(obj, color)
+
           if "gripper" in obj.name:
             P = curves[obj.name].data.splines[0].points
             addMaterialColor(curves[obj.name], color)
@@ -187,7 +196,7 @@ camera = Camera(cameraLocation, cameraFocusPoint)
 #TODO: zoom in/out to specific distance
 distance = copy.copy(camera.distance)
 camera.zoomIn(141, 141+56)
-camera.zoomOut(141+56+20, 252)
+camera.zoomOut(141+56+30, 252)
 camera.rotate(253, tend)
 # camera.zoomOut(210,400)
 
@@ -209,4 +218,5 @@ renderEngine.filepath = dirname+"/"+filename+".mp4"
 
 ### Render Animation to MP4 video
 if renderAnimation:
+  print("Starting to render %d frames."% bpy.context.scene.frame_end)
   bpy.ops.render.render(animation=True)

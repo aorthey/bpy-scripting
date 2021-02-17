@@ -565,20 +565,28 @@ def addBezierCurve(name, N =20, thickness=0.02):
   curveObject.show_transparent = True
   return curveObject
 
+glass = MaterialGlass()
 def addMaterialConcrete(obj):
   return addTextureMaterial(obj, materialConcrete.material)
 
 def addMaterialWood(obj, color):
   return addTextureMaterial(obj, materialWood.material)
-def addMaterialColor(obj, color):
-  if obj is None or obj.data is None:
-    return
-  material = MaterialColor(color).material
+
+def addMaterialGlass(obj):
+  return addMaterialToObject(obj, glass.material)
+
+def addMaterialToObject(obj, material):
   if obj.data.materials:
       obj.data.materials[0] = material
   else:
       obj.data.materials.append(material)
   obj.active_material = material
+
+def addMaterialColor(obj, color):
+  if obj is None or obj.data is None:
+    return
+  material = MaterialColor(color).material
+  addMaterialToObject(obj, material)
 
 def addTextureMaterial(obj, material):
     if obj is None or obj.data is None:

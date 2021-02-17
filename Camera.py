@@ -124,7 +124,7 @@ class Camera():
       self.cam_object.keyframe_insert(data_path="rotation_euler", index=-1)
 
 
-  def rotate(self, timeStart, timeEnd, velocity = 0.1):
+  def rotate(self, timeStart, timeEnd, velocity = 0.02):
     bpy.context.view_layer.objects.active = self.cam_object
 
     T = timeEnd - timeStart
@@ -140,7 +140,7 @@ class Camera():
 
       tcur = t - timeStart
       tstep = tcur / T
-      phiUpdate = phi + 0.01*2*np.pi
+      phiUpdate = phi + 0.002*2*np.pi
 
       [x,y,z] = spherical_to_cartesian(R, theta, phiUpdate)
 
@@ -150,7 +150,7 @@ class Camera():
 
       self.update_camera(self.cam_object, focus_point=self.focus)
 
-      print(t, phi, self.cam_object.location, self.cam_object.rotation_euler)
+      # print(t, phi, self.cam_object.location, self.cam_object.rotation_euler)
 
       self.cam_object.keyframe_insert(data_path="location", index=-1)
       self.cam_object.keyframe_insert(data_path="rotation_euler", index=-1)
