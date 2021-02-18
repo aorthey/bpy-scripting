@@ -68,9 +68,9 @@ class Segment():
         ctr = k
         break
     color = self.c[ctr]
-    pcolor = projectColor(color)
-
-    return pcolor
+    return color
+    # pcolor = projectColor(color)
+    # return pcolor
 
 
 class Anim():

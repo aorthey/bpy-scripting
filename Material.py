@@ -45,5 +45,5 @@ class MaterialColor():
   def __init__(self, color):
     self.material = bpy.data.materials.new(name="Green")
     self.material.diffuse_color = (color[0],color[1],color[2],color[3])
-    self.material.metallic = 0.0
+    self.material.metallic = 0.3
     self.material.specular_intensity = 0.0

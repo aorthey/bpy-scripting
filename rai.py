@@ -14,10 +14,17 @@ from Camera import *
 # TODO
 ########################################################
 
-#[ ] Visualize scheduler as guitar hero 
+#[x] Better distinction of robot colors
+
+#[ ] Smoother interpolation rot/zoom
 #[ ] Better visualization of frame paths
+#[ ] Visualize scheduler as guitar hero 
+#[x] diffuse on shadow to have smoother edges
+#[x] Remove shadow from paths!?
 #[x] Project Color onto nearest Pastell Color
 #[x] Background color
+
+renderAnimation = False
 
 ########################################################
 # CUSTOM SETTINGS
@@ -25,10 +32,10 @@ from Camera import *
 Nsegments = -1 #display N segments. -1: display all segments
 NkeyframeSteps = 1 #use every n-th keyframe, interpolate inbetween
 renderAnimation = True
-# renderAnimation = False
 folder = "data/animations/20210215_141740/"
 folder = "data/animations/20210216_001730/"
-folder = "data/animations/20210216_204609/"
+folder = "data/animations/20210216_204609/" ## tower, 4agents, 1crane
+folder = "data/animations/20210218_173654/" ## wall
 cameraLocation = Vector((-6,-12,+5))
 cameraFocusPoint = Vector((0,0,0))
 ########################################################
@@ -132,6 +139,13 @@ for segment in A.segments:
           if "gripper" in obj.name:
             P = curves[obj.name].data.splines[0].points
             addMaterialColor(curves[obj.name], color)
+            material = curves[obj.name].active_material
+            material.shadow_method = 'NONE'
+            curves[obj.name].cycles_visibility.shadow = False
+            material.use_nodes = True
+            bsdf = material.node_tree.nodes["Principled BSDF"]
+            bsdf.inputs['Base Color'].default_value = color
+
             L = len(P)
             for ctrPts in range(0, L):
               tval = t - ctrPts
@@ -184,7 +198,8 @@ filename = "animation"
 ## LIGHTNING
 ###############################################################################
 lightLocation = 0.3*(cameraLocation-cameraFocusPoint)+Vector((0,0,+5))
-addLightSourceSun(lightLocation)
+# addLightSourceSun(lightLocation)
+addLightSourcePoint(lightLocation)
 
 ###############################################################################
 ## CAMERA
@@ -197,7 +212,7 @@ camera = Camera(cameraLocation, cameraFocusPoint)
 distance = copy.copy(camera.distance)
 camera.zoomIn(141, 141+56)
 camera.zoomOut(141+56+30, 252)
-camera.rotate(253, tend)
+camera.rotate(253+10, tend)
 # camera.zoomOut(210,400)
 
 ## set view to camera
