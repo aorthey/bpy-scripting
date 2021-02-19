@@ -31,11 +31,13 @@ renderAnimation = False
 ########################################################
 Nsegments = -1 #display N segments. -1: display all segments
 NkeyframeSteps = 1 #use every n-th keyframe, interpolate inbetween
-renderAnimation = True
+# renderAnimation = True
 folder = "data/animations/20210215_141740/"
 folder = "data/animations/20210216_001730/"
 folder = "data/animations/20210216_204609/" ## tower, 4agents, 1crane
 folder = "data/animations/20210218_173654/" ## wall
+folder = "data/animations/Julius_well/"
+folder = "data/animations/20210218_214753/" ##pyramid
 cameraLocation = Vector((-6,-12,+5))
 cameraFocusPoint = Vector((0,0,0))
 ########################################################
@@ -101,7 +103,8 @@ for segment in A.segments:
       bpy.context.scene.frame_end = segment.timeEnd
 
     print("Import segment %d/%d [time %d,%d] (link %s %d/%d)"\
-        %(ctr,len(A.segments),segment.timeStart,segment.timeEnd, name, n,len(segment.names)))
+        %(ctr,(Nsegments+1 if Nsegments>=0 else len(A.segments)),
+          segment.timeStart,segment.timeEnd, name, n,len(segment.names)))
 
     for obj in bpy.context.selected_objects:
 
@@ -130,8 +133,8 @@ for segment in A.segments:
           obj.keyframe_insert(data_path="rotation_quaternion", index=-1)
 
 
-          pattern = r"^b[0-9]"
-          if re.match(pattern, obj.name):
+          pattern = re.compile(r'^(b|node)[0-9]+')
+          if pattern.match(obj.name):
             addMaterialGlass(obj)
           else:
             addMaterialColor(obj, color)
