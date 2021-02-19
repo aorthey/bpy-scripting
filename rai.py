@@ -30,16 +30,17 @@ renderAnimation = False
 # CUSTOM SETTINGS
 ########################################################
 Nsegments = -1 #display N segments. -1: display all segments
-NkeyframeSteps = 1 #use every n-th keyframe, interpolate inbetween
-# renderAnimation = True
+NkeyframeSteps = 20 #use every n-th keyframe, interpolate inbetween
+renderAnimation = True
 folder = "data/animations/20210215_141740/"
 folder = "data/animations/20210216_001730/"
 folder = "data/animations/20210216_204609/" ## tower, 4agents, 1crane
 folder = "data/animations/20210218_173654/" ## wall
 folder = "data/animations/Julius_well/"
-folder = "data/animations/20210218_214753/" ##pyramid
+folder = "../blender/data/animations/20210218_214753/" ##pyramid
 cameraLocation = Vector((-6,-12,+5))
 cameraFocusPoint = Vector((0,0,0))
+tRotationStart = 400 ##frame at which we start to rotate camera
 ########################################################
 
 fname = os.path.abspath(dirname+"/" + folder + "initial.dae")
@@ -215,7 +216,8 @@ camera = Camera(cameraLocation, cameraFocusPoint)
 distance = copy.copy(camera.distance)
 camera.zoomIn(141, 141+56)
 camera.zoomOut(141+56+30, 252)
-camera.rotate(253+10, tend)
+#camera.rotate(253+10, tend)
+camera.rotate(tRotationStart, tend)
 # camera.zoomOut(210,400)
 
 ## set view to camera
