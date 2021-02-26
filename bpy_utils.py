@@ -514,8 +514,8 @@ def addComicOutlineObject(obj):
 
 ##https://blender.stackexchange.com/questions/157898/blender-2-8-python-how-do-i-find-my-material-output-node-and-assign-displacem
 
-materialConcrete = Material("/home/aorthey/git/blender/textures/darkconcrete.jpg")
-materialWood = Material("/home/aorthey/git/blender/textures/wood_texture.jpg")
+# materialConcrete = Material("/home/aorthey/git/blender/textures/darkconcrete.jpg")
+# materialWood = Material("/home/aorthey/git/blender/textures/wood_texture.jpg")
 # materialConcrete = bpy.data.materials.new(name="Texture")
 # # materialTexture.diffuse_color = (1.0, 1.0, 1.0, 1.0)
 # materialConcrete.metallic = 0.0
@@ -576,13 +576,13 @@ def addBezierCurve(name, N =20, thickness=0.02):
   curveObject.show_transparent = True
   return curveObject
 
+# def addMaterialConcrete(obj):
+#   return addTextureMaterial(obj, materialConcrete.material)
+
+# def addMaterialWood(obj, color):
+#   return addTextureMaterial(obj, materialWood.material)
+
 glass = MaterialGlass()
-def addMaterialConcrete(obj):
-  return addTextureMaterial(obj, materialConcrete.material)
-
-def addMaterialWood(obj, color):
-  return addTextureMaterial(obj, materialWood.material)
-
 def addMaterialGlass(obj):
   return addMaterialToObject(obj, glass.material)
 

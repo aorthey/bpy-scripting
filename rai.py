@@ -3,6 +3,7 @@ import bmesh
 import numpy as np
 import sys, os 
 import re
+import time
 dirname = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(dirname)
 
@@ -10,11 +11,22 @@ from bpy_utils import *
 from Anim import *
 from Camera import *
 
+time_start_script = time.process_time()
 ########################################################
 # TODO
 ########################################################
 
+
+#[ ] render one single endframe (without robots)
+#[ ] Faster loading of keyframes by not using interpolation
+#for fcurve in obj.animation_data.action.fcurves:
+#  kf = fcurve.keyframe_points[-1]
+#  kf.interpolation = 'CONSTANT'
+
 #[x] Better distinction of robot colors
+#[ ] Non-light emitting background
+#https://blenderartists.org/t/add-white-background-to-scene-without-lighting-scene/1206942
+#https://blenderartists.org/t/how-to-get-a-white-background-that-doesnt-emit-light/601130
 
 #[ ] Smoother interpolation rot/zoom
 #[ ] Better visualization of frame paths
@@ -30,17 +42,24 @@ renderAnimation = False
 # CUSTOM SETTINGS
 ########################################################
 Nsegments = -1 #display N segments. -1: display all segments
-NkeyframeSteps = 20 #use every n-th keyframe, interpolate inbetween
-renderAnimation = True
+NkeyframeSteps = 30 #use every n-th keyframe, interpolate inbetween
+# renderAnimation = True
+tPaddingEnd = 250 #number of frames to append after algorithms converged
+tRotationStart = 500 ##frame at which we start to rotate camera
 folder = "data/animations/20210215_141740/"
 folder = "data/animations/20210216_001730/"
 folder = "data/animations/20210216_204609/" ## tower, 4agents, 1crane
+folder = "data/animations/20210218_214753/" ##pyramid
+
+folder = "data/animations/Julius_well/" ## well (Julius, 2 agents)
+
+filename = "FIT_keyframe"
+folder = "data/animations/20210223_192210/" ##FIT building, 6 agents
+folder = "data/animations/20210223_112459/" ## well (valentin, 6 agents)
 folder = "data/animations/20210218_173654/" ## wall
-folder = "data/animations/Julius_well/"
-folder = "../blender/data/animations/20210218_214753/" ##pyramid
+folder = "data/animations/20210221_004210/" ## tower
 cameraLocation = Vector((-6,-12,+5))
 cameraFocusPoint = Vector((0,0,0))
-tRotationStart = 400 ##frame at which we start to rotate camera
 ########################################################
 
 fname = os.path.abspath(dirname+"/" + folder + "initial.dae")
@@ -53,7 +72,6 @@ bpy.ops.object.select_all(action='SELECT')
 bpy.ops.object.delete()
 
 c = bpy.ops.wm.collada_import(filepath=fname, import_units=True, auto_connect=False)
-
 
 ## SELECT ALL OBJECTS IN BLENDER
 bpy.ops.object.select_all(action='SELECT')
@@ -108,6 +126,12 @@ for segment in A.segments:
           segment.timeStart,segment.timeEnd, name, n,len(segment.names)))
 
     for obj in bpy.context.selected_objects:
+      if obj.name != name:
+        continue
+      if "coll" in name:
+        continue
+      if '_' in obj.name:
+        continue
 
       ## FIXED CURVE FOR DEBUGGING
       # if obj.name == name and "gripper" in obj.name:
@@ -120,56 +144,58 @@ for segment in A.segments:
       #     p = P[t-segment.timeStart]
       #     p.co = (pose[0], pose[1], pose[2], 1.0)
 
-      if obj.name == name and "coll" not in name:
-        ## FOUND match between collada object and Anim object for current segment
-        for t in range(segment.timeStart, segment.timeEnd, NkeyframeSteps):
-          pose = segment.getPoses(t, name)
-          color = segment.getColor(name)
-          bpy.context.scene.frame_set(t)
-          obj.location = pose[0:3]
-          obj.rotation_mode = 'QUATERNION'
-          obj.rotation_quaternion = pose[3:]
-          obj.parent = None
-          obj.keyframe_insert(data_path="location", index=-1)
-          obj.keyframe_insert(data_path="rotation_quaternion", index=-1)
+      for t in range(segment.timeStart, segment.timeEnd, NkeyframeSteps):
+        pose = segment.getPoses(t, name)
+        color = segment.getColor(name)
+        bpy.context.scene.frame_set(t)
+        obj.location = pose[0:3]
+        obj.rotation_mode = 'QUATERNION'
+        obj.rotation_quaternion = pose[3:]
+        obj.parent = None
+        obj.keyframe_insert(data_path="location", index=-1)
+        obj.keyframe_insert(data_path="rotation_quaternion", index=-1)
+        for fcurve in obj.animation_data.action.fcurves:
+          kf = fcurve.keyframe_points[-1]
+          kf.interpolation = 'CONSTANT'
 
+        # pattern = re.compile(r'^(b|node)[0-9]+')
+        # if pattern.match(obj.name):
+        if '_' not in obj.name:
+          # print("Add glass material.")
+          addMaterialGlass(obj)
+        else:
+          addMaterialColor(obj, color)
 
-          pattern = re.compile(r'^(b|node)[0-9]+')
-          if pattern.match(obj.name):
-            addMaterialGlass(obj)
-          else:
-            addMaterialColor(obj, color)
+        if "gripper" in obj.name:
+          P = curves[obj.name].data.splines[0].points
+          addMaterialColor(curves[obj.name], color)
+          material = curves[obj.name].active_material
+          material.shadow_method = 'NONE'
+          curves[obj.name].cycles_visibility.shadow = False
+          material.use_nodes = True
+          bsdf = material.node_tree.nodes["Principled BSDF"]
+          bsdf.inputs['Base Color'].default_value = color
 
-          if "gripper" in obj.name:
-            P = curves[obj.name].data.splines[0].points
-            addMaterialColor(curves[obj.name], color)
-            material = curves[obj.name].active_material
-            material.shadow_method = 'NONE'
-            curves[obj.name].cycles_visibility.shadow = False
-            material.use_nodes = True
-            bsdf = material.node_tree.nodes["Principled BSDF"]
-            bsdf.inputs['Base Color'].default_value = color
+          L = len(P)
+          for ctrPts in range(0, L):
+            tval = t - ctrPts
+            if tval > 0:
+              cPose = segment.getPoses(tval, name)
+            else:
+              cPose = segment.getPoses(0, name)
+            p = P[ctrPts]
+            #Ordering of points: left is current in time, right is back in time
+            p.co = (cPose[0], cPose[1], cPose[2], 1.0)
 
-            L = len(P)
-            for ctrPts in range(0, L):
-              tval = t - ctrPts
-              if tval > 0:
-                cPose = segment.getPoses(tval, name)
-              else:
-                cPose = segment.getPoses(0, name)
-              p = P[ctrPts]
-              #Ordering of points: left is current in time, right is back in time
-              p.co = (cPose[0], cPose[1], cPose[2], 1.0)
+            ##Attempt at letting path fade out (does not work yet)
+            alpha = 1.0 - float(ctrPts)/float(L)
+            slot = curves[obj.name].material_slots[0]
+            slot.material.diffuse_color[3] = alpha
 
-              ##Attempt at letting path fade out (does not work yet)
-              alpha = 1.0 - float(ctrPts)/float(L)
-              slot = curves[obj.name].material_slots[0]
-              slot.material.diffuse_color[3] = alpha
-
-              p.keyframe_insert(data_path="co", index=-1)
+            p.keyframe_insert(data_path="co", index=-1)
 
       ####WEIRD behavior during fadeout
-      if obj.name == name and "gripper" in obj.name:
+      if "gripper" in obj.name:
         ##add fadeout
         tend = segment.timeEnd
 
@@ -196,8 +222,6 @@ for segment in A.segments:
             p.keyframe_insert(data_path="co")
 
 
-filename = "animation"
-
 ###############################################################################
 ## LIGHTNING
 ###############################################################################
@@ -208,7 +232,8 @@ addLightSourcePoint(lightLocation)
 ###############################################################################
 ## CAMERA
 ###############################################################################
-tend = bpy.context.scene.frame_end
+bpy.context.scene.frame_end += tPaddingEnd
+tend = bpy.context.scene.frame_end 
 camera = Camera(cameraLocation, cameraFocusPoint)
 #0:0,pick 141,place 56,retract 53;252,pick 48,place 307,retract 52;
 
@@ -240,3 +265,7 @@ renderEngine.filepath = dirname+"/"+filename+".mp4"
 if renderAnimation:
   print("Starting to render %d frames."% bpy.context.scene.frame_end)
   bpy.ops.render.render(animation=True)
+
+elapsed_time = time.process_time() - time_start_script
+print("TIME for RENDERING: %f (in s), %f (in m), %f (in h)"%\
+    (elapsed_time,elapsed_time/60,elapsed_time/60/60))

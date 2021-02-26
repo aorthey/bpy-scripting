@@ -124,7 +124,7 @@ class Camera():
       self.cam_object.keyframe_insert(data_path="rotation_euler", index=-1)
 
 
-  def rotate(self, timeStart, timeEnd, velocity = 0.01):
+  def rotate(self, timeStart, timeEnd, velocity = 0.005):
     bpy.context.view_layer.objects.active = self.cam_object
 
     T = timeEnd - timeStart
