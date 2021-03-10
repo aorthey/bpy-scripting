@@ -1,5 +1,6 @@
 import bpy
 import bmesh
+
 import numpy as np
 import sys, os 
 import re
@@ -11,19 +12,41 @@ from bpy_utils import *
 from Anim import *
 from Camera import *
 from src.Path import Path
+from src.Colors import materialMagenta
 
-cameraLocation = Vector((-6,-12,+5))
+cameraLocation = Vector((+6,0,+6))
 cameraFocusPoint = Vector((0,0,0))
+sizeStates = 0.15
 folder = "data/modes/torus/"
 filename = os.path.basename(os.path.dirname(folder))
 
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete()
+
 ########################################################
+## DEFINE COLORS
+########################################################
+torusMaterial = bpy.data.materials.new(name="Gray")
+torusMaterial.diffuse_color = (0.9, 0.9, 0.9, 1.0)
+torusMaterial.metallic = 0.3
+torusMaterial.specular_intensity = 0.9
+
+curveMaterial = bpy.data.materials.new(name="Curve")
+curveMaterial.diffuse_color = (0.08, 0.7, 0.08, 1.0)
+curveMaterial.diffuse_color = (0.9, 0.01, 0.01, 1.0)
+curveMaterial.metallic = 0.7
+curveMaterial.specular_intensity = 0.9
 fname = os.path.abspath(dirname+"/" + folder + "scene.dae")
+
+# c = bpy.ops.wm.collada_import(filepath=fname, import_units=True, auto_connect=False)
 
 curves = {}
 bpy.context.scene.frame_start = 0
 bpy.context.scene.frame_end = 0
 
+########################################################
+### LOAD CURVES
+########################################################
 PathArray = []
 for filename in os.listdir(folder):
   if not filename.endswith(".path"):
@@ -35,6 +58,10 @@ for path in PathArray:
   print(path.name,":",len(path.keyframes)," ",path.timeStart," ",path.timeEnd)
 
   curve = addBezierCurve(path.name, N=path.Nstates-1)
+  curve.data.materials.clear()
+  curve.data.materials.append(curveMaterial)
+  curve.show_transparent = True
+
   curves[path.name] = curve
 
   curve.hide_render = True
@@ -53,7 +80,6 @@ for path in PathArray:
     curve.hide_viewport = True
     curve.keyframe_insert("hide_viewport", frame=path.removal_time)
 
-
   for keyframe in path.keyframes:
     if keyframe.time > bpy.context.scene.frame_end:
       bpy.context.scene.frame_end = keyframe.time
@@ -65,218 +91,135 @@ for path in PathArray:
       p.co= (state[0], state[1], state[2], 1)
       p.keyframe_insert(data_path="co")
 
+startState = PathArray[0].keyframes[0].states[0]
+goalState = PathArray[0].keyframes[0].states[-1]
 
-#    bpy.context.scene.frame_set(0)
-#    obj.location = [0,0,-0.15]
-#    obj.rotation_mode = 'QUATERNION'
-#    obj.rotation_quaternion = [1,0,0,0]
-#    obj.parent = None
-#    obj.keyframe_insert(data_path="location", index=-1)
-#    obj.keyframe_insert(data_path="rotation_quaternion", index=-1)
-#    # addMaterialConcrete(obj)
-#    addMaterialColor(obj, (0.6,0.6,0.6,1.0))
-## cameraLocation = Vector((-1.5,-3,+1.5))
+startState = Vector([startState[0],startState[1],startState[2]])
+goalState = Vector([goalState[0],goalState[1],goalState[2]])
 
-### delete all previous objects in scene
-#bpy.ops.object.select_all(action='SELECT')
-#bpy.ops.object.delete()
+addSphere(startState, "startState", color=colorStartState, size=sizeStates)
+addSphere(goalState, "goalState", color=colorGoalState, size=sizeStates)
+########################################################
+### ADD TORUS
+########################################################
 
-#c = bpy.ops.wm.collada_import(filepath=fname, import_units=True, auto_connect=False)
+torusMajorRadius = 1
+torusMinorRadius = 0.6
+torus_mesh = bpy.ops.mesh.primitive_torus_add(major_radius = torusMajorRadius,
+    minor_radius = torusMinorRadius,
+    major_segments = 64, minor_segments = 32, location=(0,0,0))
+torus_obj = bpy.context.object
+torus_obj.name = 'Torus'
 
-### SELECT ALL OBJECTS IN BLENDER
-#bpy.ops.object.select_all(action='SELECT')
 
-#objs = bpy.context.selected_objects
+################ Additional transparency
+torusMaterial.use_nodes=True
+nodes = torusMaterial.node_tree.nodes
+    # clear all nodes to start clean
+for node in nodes:
+    nodes.remove(node)
+    # link nodes
+links = torusMaterial.node_tree.links
 
-#curves = {}
-#for obj in objs:
-#  if "gripper" in obj.name:
-#    curveDynamic = addBezierCurve(obj.name)
-#    curves[obj.name] = curveDynamic
-#  obj.location = [0,-1000,-1000]
-#  if obj.name == "plate":
-#    bpy.context.scene.frame_set(0)
-#    obj.location = [0,0,-0.15]
-#    obj.rotation_mode = 'QUATERNION'
-#    obj.rotation_quaternion = [1,0,0,0]
-#    obj.parent = None
-#    obj.keyframe_insert(data_path="location", index=-1)
-#    obj.keyframe_insert(data_path="rotation_quaternion", index=-1)
-#    # addMaterialConcrete(obj)
-#    addMaterialColor(obj, (0.6,0.6,0.6,1.0))
+    #create the basic material nodes
+node_output  = nodes.new(type='ShaderNodeOutputMaterial')
+node_output.location = 400,0
+node_pbsdf    = nodes.new(type='ShaderNodeBsdfPrincipled')
+node_pbsdf.location = 0,0
+node_pbsdf.inputs['Base Color'].default_value = torusMaterial.diffuse_color
+node_pbsdf.inputs['Alpha'].default_value = 0.5 # 1 is opaque, 0 is invisible
+node_pbsdf.inputs['Roughness'].default_value = 0.2
+node_pbsdf.inputs['Specular'].default_value = 0.9
+node_pbsdf.inputs['Transmission'].default_value = 0.5 # 1 is fully transparent
 
-#### SET BACKGROUND COLOR OF SCENE
-#world = bpy.context.scene.world
-#if world is None:
-#  new_world = bpy.data.worlds.new("New World")
-#  world = new_world
+link = links.new(node_pbsdf.outputs['BSDF'], node_output.inputs['Surface'])
 
-#world.use_nodes = True
-#bg = world.node_tree.nodes['Background']
-#bg.inputs[0].default_value[:3] = (.2, .2, .2)
-#bg.inputs[1].default_value = 1.0
+torusMaterial.blend_method = 'HASHED'
+torusMaterial.shadow_method = 'HASHED'
+torusMaterial.use_screen_refraction = True
 
-#bpy.ops.object.select_all(action='SELECT')
+torus_obj.data.materials.append(torusMaterial)
+torus_obj.show_transparent = True #  displays trans in viewport
 
-#ctr = 0
-#bpy.context.scene.frame_start = 0
-#bpy.context.scene.frame_end = 0
-#for segment in A.segments:
-#  if ctr > Nsegments and Nsegments >= 0:
-#    break
-#  ctr = ctr + 1
-#  for n in range(0,len(segment.names)):
-#    name = segment.names[n]
+bpy.ops.object.modifier_add(type='SUBSURF')
+bpy.ops.object.shade_smooth()
 
-#    if segment.timeEnd > bpy.context.scene.frame_end:
-#      bpy.context.scene.frame_end = segment.timeEnd
-
-#    print("Import segment %d/%d [time %d,%d] (link %s %d/%d)"\
-#        %(ctr,(Nsegments+1 if Nsegments>=0 else len(A.segments)),
-#          segment.timeStart,segment.timeEnd, name, n,len(segment.names)))
-
-#    for obj in bpy.context.selected_objects:
-#      if obj.name != name:
-#        continue
-#      if "coll" in name:
-#        continue
-#      # if '_' in obj.name:
-#      #   continue
-
-#      ## FIXED CURVE FOR DEBUGGING
-#      # if obj.name == name and "gripper" in obj.name:
-#      #   T = range(segment.timeStart, segment.timeEnd)
-#      #   Ng = len(T)-1
-#      #   curveObject = addBezierCurve(obj.name+"trail", Ng, 0.005)
-#      #   P = curveObject.data.splines[0].points
-#      #   for t in T:
-#      #     pose = segment.getPoses(t, obj.name)
-#      #     p = P[t-segment.timeStart]
-#      #     p.co = (pose[0], pose[1], pose[2], 1.0)
-
-#      for t in range(segment.timeStart, segment.timeEnd, NkeyframeSteps):
-#        pose = segment.getPoses(t, name)
-#        color = segment.getColor(name)
-#        bpy.context.scene.frame_set(t)
-#        obj.location = pose[0:3]
-#        obj.rotation_mode = 'QUATERNION'
-#        obj.rotation_quaternion = pose[3:]
-#        obj.parent = None
-#        obj.keyframe_insert(data_path="location", index=-1)
-#        obj.keyframe_insert(data_path="rotation_quaternion", index=-1)
-#        for fcurve in obj.animation_data.action.fcurves:
-#          kf = fcurve.keyframe_points[-1]
-#          kf.interpolation = 'CONSTANT'
-
-#        # pattern = re.compile(r'^(b|node)[0-9]+')
-#        # if pattern.match(obj.name):
-#        if '_' not in obj.name:
-#          # print("Add glass material.")
-#          addMaterialGlass(obj)
-#        else:
-#          addMaterialColor(obj, color)
-
-#        if "gripper" in obj.name:
-#          P = curves[obj.name].data.splines[0].points
-#          addMaterialColor(curves[obj.name], color)
-#          material = curves[obj.name].active_material
-#          material.shadow_method = 'NONE'
-#          curves[obj.name].cycles_visibility.shadow = False
-#          material.use_nodes = True
-#          bsdf = material.node_tree.nodes["Principled BSDF"]
-#          bsdf.inputs['Base Color'].default_value = color
-
-#          L = len(P)
-#          for ctrPts in range(0, L):
-#            tval = t - ctrPts
-#            if tval > 0:
-#              cPose = segment.getPoses(tval, name)
-#            else:
-#              cPose = segment.getPoses(0, name)
-#            p = P[ctrPts]
-#            #Ordering of points: left is current in time, right is back in time
-#            p.co = (cPose[0], cPose[1], cPose[2], 1.0)
-
-#            ##Attempt at letting path fade out (does not work yet)
-#            alpha = 1.0 - float(ctrPts)/float(L)
-#            slot = curves[obj.name].material_slots[0]
-#            slot.material.diffuse_color[3] = alpha
-
-#            p.keyframe_insert(data_path="co", index=-1)
-
-#      ####WEIRD behavior during fadeout
-#      if "gripper" in obj.name:
-#        ##add fadeout
-#        tend = segment.timeEnd
-
-#        P = curves[obj.name].data.splines[0].points
-#        L = len(P)
-
-#        if tend+L > bpy.context.scene.frame_end:
-#          bpy.context.scene.frame_end = tend + L
-
-#        for t in range(tend, tend + L):
-#          bpy.context.scene.frame_set(t)
-
-#          for ctrPts in range(0, L):
-#            tval = t - ctrPts
-#            if tval <= 0:
-#              cPose = segment.getPoses(0, name)
-#            elif tval < tend:
-#              cPose = segment.getPoses(tval, name)
-#            else:
-#              cPose = segment.getPoses(tend-1, name)
-
-#            p = P[ctrPts]
-#            p.co = (cPose[0], cPose[1], cPose[2], 1)
-#            p.keyframe_insert(data_path="co")
 
 
 ################################################################################
-### LIGHTNING
+### PUNCTURING OF TORUS
 ################################################################################
-#lightLocation = 0.3*(cameraLocation-cameraFocusPoint)+Vector((0,0,+5))
-## addLightSourceSun(lightLocation)
-#addLightSourcePoint(lightLocation)
+
+bpy.ops.object.select_all(action='DESELECT')
+
+mesh = bpy.data.meshes.new('Basic_Sphere')
+basic_sphere = bpy.data.objects.new("Basic_Sphere", mesh)
+basic_sphere.location = basic_sphere.location + Vector([0,1,0.5])
+
+bpy.context.collection.objects.link(basic_sphere)
+bpy.context.view_layer.objects.active = basic_sphere
+basic_sphere.select_set(True)
+bm = bmesh.new()
+bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, diameter=0.5)
+bm.to_mesh(mesh)
+bm.free()
+
+# torus_obj.select_set(True)
+bpy.context.view_layer.objects.active = torus_obj
+
+
+bool_mod = torus_obj.modifiers.new(type="BOOLEAN", name="bool1")
+bool_mod.operation = 'DIFFERENCE'
+bool_mod.object = basic_sphere
+
+bpy.ops.object.modifier_apply(modifier=bool_mod.name)
+
+bpy.ops.object.select_all(action='DESELECT')
+basic_sphere.select_set(True)
+bpy.ops.object.delete() 
 
 ################################################################################
-### CAMERA
+### LIGHTNING & CAMERA
 ################################################################################
-#bpy.context.scene.frame_end += tPaddingEnd
-#tend = bpy.context.scene.frame_end 
-#camera = Camera(cameraLocation, cameraFocusPoint)
-##0:0,pick 141,place 56,retract 53;252,pick 48,place 307,retract 52;
+lightLocation = 0.3*(cameraLocation-cameraFocusPoint)+Vector((0,0,+5))
+addLightSourcePoint(lightLocation)
 
-##TODO: zoom in/out to specific distance
-#distance = copy.copy(camera.distance)
-#if doZoom:
-#    camera.zoomIn(tZoomStart, tZoomStart+50)
-#    camera.zoomOut(tZoomStart+50+50, tZoomStart+50+50+tZoomOutDuration)
-##camera.rotate(253+10, tend)
-#camera.rotate(tRotationStart, tend)
-## camera.zoomOut(210,400)
-
-### set view to camera
-#for area in bpy.context.screen.areas:
-#  if area.type == 'VIEW_3D':
-#    area.spaces[0].region_3d.view_perspective = 'CAMERA'
-#    break
+camera = Camera(cameraLocation, cameraFocusPoint)
 
 ################################################################################
 ### RENDERING
 ################################################################################
-#renderEngine = bpy.context.scene.render
-#renderEngine.image_settings.file_format = "FFMPEG"
-#renderEngine.ffmpeg.format = "MPEG4"
-#renderEngine.ffmpeg.codec = "H264"
-#renderEngine.ffmpeg.constant_rate_factor = "HIGH" #MEDIUM, LOW
-#renderEngine.filepath = dirname+"/"+filename+".mp4"
 
-#### Render Animation to MP4 video
-#if renderAnimation:
-#  print("Starting to render %d frames."% bpy.context.scene.frame_end)
-#  bpy.ops.render.render(animation=True)
+bpy.context.scene.eevee.use_ssr = True
+bpy.context.scene.eevee.use_ssr_refraction = True
 
-#elapsed_time = time.process_time() - time_start_script
-#print("TIME for RENDERING: %f (in s), %f (in m), %f (in h)"%\
-#    (elapsed_time,elapsed_time/60,elapsed_time/60/60))
+#### VIDEO (MP4)
+renderEngine = bpy.context.scene.render
+renderEngine.image_settings.file_format = "FFMPEG"
+renderEngine.ffmpeg.format = "MPEG4"
+renderEngine.ffmpeg.codec = "H264"
+renderEngine.ffmpeg.constant_rate_factor = "HIGH" #MEDIUM, LOW
+renderEngine.filepath = dirname+"/"+filename+".mp4"
+
+#### IMAGE (PNG)
+# renderEngine = bpy.context.scene.render
+# renderEngine.film_transparent = True
+# renderEngine.image_settings.file_format = "PNG"
+# renderEngine.image_settings.color_mode = 'RGBA'
+# renderEngine.filepath = dirname+"/"+filename+'.png'
+# bpy.ops.render.render(write_still = True)
+
+# renderEngine.filepath = dirname+"/"+filename+'.png'
+# ff = renderEngine.filepath
+# os.system("convert -trim %s %s"%(ff,ff))
+# print(renderEngine.filepath)
+
+
+### Render Animation to MP4 video
+# if renderAnimation:
+#   print("Starting to render %d frames."% bpy.context.scene.frame_end)
+#   bpy.ops.render.render(animation=True)
+
+# elapsed_time = time.process_time() - time_start_script
+# print("TIME for RENDERING: %f (in s), %f (in m), %f (in h)"%\
+#     (elapsed_time,elapsed_time/60,elapsed_time/60/60))
