@@ -17,6 +17,8 @@ time_start_script = time.process_time()
 ########################################################
 
 
+#[ ] DO NOT LOAD EVERY COLOR AS A SINGLE MATERIAL. DOES NOT MAKE SENSE.
+
 #[ ] render one single endframe (without robots)
 #[ ] Faster loading of keyframes by not using interpolation
 #for fcurve in obj.animation_data.action.fcurves:
@@ -42,10 +44,16 @@ renderAnimation = False
 # CUSTOM SETTINGS
 ########################################################
 Nsegments = -1 #display N segments. -1: display all segments
-NkeyframeSteps = 30 #use every n-th keyframe, interpolate inbetween
+NkeyframeSteps = 1 #use every n-th keyframe, interpolate inbetween
 # renderAnimation = True
+doZoom=True
 tPaddingEnd = 250 #number of frames to append after algorithms converged
-tRotationStart = 500 ##frame at which we start to rotate camera
+tZoomStart = 100 ##frame at which we start to rotate camera
+tZoomOutDuration = 25
+tRotationStart = tZoomStart + 200
+cameraLocation = Vector((-6,-12,+5))
+cameraFocusPoint = Vector((0,0,0))
+
 folder = "data/animations/20210215_141740/"
 folder = "data/animations/20210216_001730/"
 folder = "data/animations/20210216_204609/" ## tower, 4agents, 1crane
@@ -53,13 +61,32 @@ folder = "data/animations/20210218_214753/" ##pyramid
 
 folder = "data/animations/Julius_well/" ## well (Julius, 2 agents)
 
-filename = "FIT_keyframe"
 folder = "data/animations/20210223_192210/" ##FIT building, 6 agents
 folder = "data/animations/20210223_112459/" ## well (valentin, 6 agents)
 folder = "data/animations/20210218_173654/" ## wall
 folder = "data/animations/20210221_004210/" ## tower
-cameraLocation = Vector((-6,-12,+5))
-cameraFocusPoint = Vector((0,0,0))
+folder = "data/animations/20210226_124540/" ## tower (4kuka, 4mobile)
+folder = "data/animations/20210226_130645/" ## tower (4kuka, 4mobile, 1crane)
+
+folder = "data/animations/fit/" ##final FIT (6+6 agents)
+folder = "data/animations/wall/" ##final wall (6+6 agents)
+folder = "data/animations/20210226_135839/" ## tower (right colors)
+
+folder = "data/animations/all_robots/" ##Group Picture
+folder = "data/animations/handover/" ##Final Tower Handover
+
+filename = os.path.basename(os.path.dirname(folder))
+
+if "fit" in filename:
+  tZoomOutDuration = 35
+if "20210226_135839" in filename:
+  tZoomOutDuration = 40
+if "handover" in filename:
+  doZoom=False
+  cameraLocation = Vector((-14,-20,+9))
+  tRotationStart = 0
+  tZoomOutDuration = 40
+
 ########################################################
 
 fname = os.path.abspath(dirname+"/" + folder + "initial.dae")
@@ -130,8 +157,8 @@ for segment in A.segments:
         continue
       if "coll" in name:
         continue
-      if '_' in obj.name:
-        continue
+      # if '_' in obj.name:
+      #   continue
 
       ## FIXED CURVE FOR DEBUGGING
       # if obj.name == name and "gripper" in obj.name:
@@ -239,8 +266,9 @@ camera = Camera(cameraLocation, cameraFocusPoint)
 
 #TODO: zoom in/out to specific distance
 distance = copy.copy(camera.distance)
-camera.zoomIn(141, 141+56)
-camera.zoomOut(141+56+30, 252)
+if doZoom:
+    camera.zoomIn(tZoomStart, tZoomStart+50)
+    camera.zoomOut(tZoomStart+50+50, tZoomStart+50+50+tZoomOutDuration)
 #camera.rotate(253+10, tend)
 camera.rotate(tRotationStart, tend)
 # camera.zoomOut(210,400)
