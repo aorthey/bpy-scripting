@@ -12,12 +12,28 @@ from bpy_utils import *
 from Anim import *
 from Camera import *
 from src.Path import Path
+from src.PathArray import PathArray
 from src.Colors import materialMagenta
+from src.RenderEngine import RenderEngine
 
-cameraLocation = Vector((+6,0,+6))
+#[ ] automate camera selection for each scenario
+
+time_start_script = time.process_time()
+
+cameraLocation = Vector((+6,0,+6)) #torus
 cameraFocusPoint = Vector((0,0,0))
+
 sizeStates = 0.15
+renderAnimation=False
+renderImage=False
+folder = "data/modes/passage/"
 folder = "data/modes/torus/"
+folder = "data/modes/sphere/"
+folder = "data/modes/multigoal/"
+folder = "data/modes/lattice/"
+folder = "data/modes/rod/"
+folder = "data/modes/jaillet/"
+
 filename = os.path.basename(os.path.dirname(folder))
 
 bpy.ops.object.select_all(action='SELECT')
@@ -31,152 +47,310 @@ torusMaterial.diffuse_color = (0.9, 0.9, 0.9, 1.0)
 torusMaterial.metallic = 0.3
 torusMaterial.specular_intensity = 0.9
 
-curveMaterial = bpy.data.materials.new(name="Curve")
-curveMaterial.diffuse_color = (0.08, 0.7, 0.08, 1.0)
-curveMaterial.diffuse_color = (0.9, 0.01, 0.01, 1.0)
-curveMaterial.metallic = 0.7
-curveMaterial.specular_intensity = 0.9
-fname = os.path.abspath(dirname+"/" + folder + "scene.dae")
-
-# c = bpy.ops.wm.collada_import(filepath=fname, import_units=True, auto_connect=False)
-
-curves = {}
 bpy.context.scene.frame_start = 0
 bpy.context.scene.frame_end = 0
 
 ########################################################
-### LOAD CURVES
+### LOAD CURVES AND OBJECTS
 ########################################################
-PathArray = []
-for filename in os.listdir(folder):
-  if not filename.endswith(".path"):
-    continue
-  path = Path(folder+"/"+filename)
-  PathArray.append(path)
+fname = os.path.abspath(dirname+"/" + folder + "scene.dae")
 
-for path in PathArray:
-  print(path.name,":",len(path.keyframes)," ",path.timeStart," ",path.timeEnd)
+########################################################
+### CUSTOM CHANGES
+########################################################
+if "lattice" in folder:
+  lightLocation = Vector((0,4,0))
+  addLightSourcePoint(lightLocation)
 
-  curve = addBezierCurve(path.name, N=path.Nstates-1)
-  curve.data.materials.clear()
-  curve.data.materials.append(curveMaterial)
-  curve.show_transparent = True
+  c = bpy.ops.wm.collada_import(filepath=fname, import_units=True, auto_connect=False)
+  cameraLocation = Vector((+3.5,+9.4,+2.3))
+  bpy.ops.object.select_all(action='SELECT')
+  objs = bpy.context.selected_objects
 
-  curves[path.name] = curve
+  for obj in objs:
+    if "the_lattice" in obj.name:
+      bpy.context.scene.frame_set(0)
+      obj.rotation_mode = 'QUATERNION'
+      obj.rotation_quaternion = [1,0,0,0]
+      obj.keyframe_insert(data_path="rotation_quaternion", index=-1)
 
-  curve.hide_render = True
-  curve.keyframe_insert(data_path="hide_render", frame=0)
-  curve.hide_viewport = True
-  curve.keyframe_insert("hide_viewport", frame=0)
+  for obj in objs:
+    if "body" in obj.name:
+      bpy.ops.object.select_all(action='DESELECT')
+      obj.select_set(True)
+      bpy.ops.object.delete() 
+      break
 
-  curve.hide_render = False
-  curve.keyframe_insert(data_path="hide_render", frame=path.timeStart)
-  curve.hide_viewport = False
-  curve.keyframe_insert("hide_viewport", frame=path.timeStart)
+if "jaillet" in folder:
+  lightLocation = Vector((-8,0,+6))
+  addLightSourcePoint(lightLocation)
 
-  if path.to_be_removed:
-    curve.hide_render = True
-    curve.keyframe_insert(data_path="hide_render", frame=path.removal_time)
-    curve.hide_viewport = True
-    curve.keyframe_insert("hide_viewport", frame=path.removal_time)
+  c = bpy.ops.wm.collada_import(filepath=fname, import_units=True, auto_connect=False)
+  bpy.ops.object.select_all(action='SELECT')
+  objs = bpy.context.selected_objects
 
-  for keyframe in path.keyframes:
-    if keyframe.time > bpy.context.scene.frame_end:
-      bpy.context.scene.frame_end = keyframe.time
+  cameraLocation = Vector((-12,4.3,9.7))
 
-    bpy.context.scene.frame_set(keyframe.time)
-    P = curve.data.splines[0].points
-    for (index, state) in enumerate(keyframe.states):
-      p = P[index]
-      p.co= (state[0], state[1], state[2], 1)
-      p.keyframe_insert(data_path="co")
+  for obj in objs:
+    if "plate" in obj.name:
+      bpy.context.scene.frame_set(0)
+      obj.rotation_mode = 'QUATERNION'
+      obj.rotation_quaternion = [1,0,0,0]
+      obj.keyframe_insert(data_path="rotation_quaternion", index=-1)
+      color = (0.5,0.5,0.5,1.0)
+      addMaterialColor(obj, color)
 
-startState = PathArray[0].keyframes[0].states[0]
-goalState = PathArray[0].keyframes[0].states[-1]
+  for obj in objs:
+    if "body" in obj.name:
+      bpy.ops.object.select_all(action='DESELECT')
+      obj.select_set(True)
+      bpy.ops.object.delete() 
+      break
 
+if "rod" in folder:
+  lightLocation = Vector((1.8,3,3.8))
+  addLightSourcePoint(lightLocation)
+
+  c = bpy.ops.wm.collada_import(filepath=fname, import_units=True, auto_connect=False)
+  cameraLocation = Vector((+1.5*2.5,+1.5*6.7,+3.5))
+  cameraLocation = Vector((2.1,7.7,6.6))
+  cameraFocusPoint = Vector((0,0,1))
+
+  bpy.ops.object.select_all(action='SELECT')
+  objs = bpy.context.selected_objects
+
+  for obj in objs:
+    if "plate" in obj.name:
+      bpy.context.scene.frame_set(0)
+      obj.rotation_mode = 'QUATERNION'
+      obj.rotation_quaternion = [1,0,0,0]
+      obj.keyframe_insert(data_path="rotation_quaternion", index=-1)
+      color = (0.5,0.5,0.5,1.0)
+      addMaterialColor(obj, color)
+    if "cylinder" in obj.name:
+      bpy.context.scene.frame_set(0)
+      obj.rotation_mode = 'QUATERNION'
+      obj.rotation_quaternion = [1,0,0,0]
+      obj.location = (0,0,1)
+      obj.keyframe_insert(data_path="rotation_quaternion", index=-1)
+      obj.keyframe_insert(data_path="location", index=-1)
+
+      torusMaterial.use_nodes=True
+      nodes = torusMaterial.node_tree.nodes
+      for node in nodes:
+          nodes.remove(node)
+      links = torusMaterial.node_tree.links
+
+      node_output  = nodes.new(type='ShaderNodeOutputMaterial')
+      node_output.location = 400,0
+      node_pbsdf    = nodes.new(type='ShaderNodeBsdfPrincipled')
+      node_pbsdf.location = 0,0
+      node_pbsdf.inputs['Base Color'].default_value = torusMaterial.diffuse_color
+      node_pbsdf.inputs['Alpha'].default_value = 0.4 # 1 is opaque, 0 is invisible
+      node_pbsdf.inputs['Roughness'].default_value = 0.1
+      node_pbsdf.inputs['Specular'].default_value = 0.5
+      node_pbsdf.inputs['Transmission'].default_value = 0.7 # 1 is fully transparent
+
+      link = links.new(node_pbsdf.outputs['BSDF'], node_output.inputs['Surface'])
+
+      torusMaterial.blend_method = 'HASHED'
+      torusMaterial.shadow_method = 'HASHED'
+      torusMaterial.use_screen_refraction = True
+      addMaterialToObject(obj, torusMaterial)
+
+  for obj in objs:
+    if "body" in obj.name:
+      bpy.ops.object.select_all(action='DESELECT')
+      obj.select_set(True)
+      bpy.ops.object.delete() 
+      break
+
+if "passage" in folder:
+  c = bpy.ops.wm.collada_import(filepath=fname, import_units=True, auto_connect=False)
+  bpy.ops.object.select_all(action='SELECT')
+  objs = bpy.context.selected_objects
+  cameraLocation = Vector((+0.0,0,+9.3)) #passage
+  for obj in objs:
+    if "O1" in obj.name:
+      bpy.context.scene.frame_set(0)
+      obj.rotation_mode = 'QUATERNION'
+      obj.rotation_quaternion = [1,0,0,0]
+      obj.keyframe_insert(data_path="rotation_quaternion", index=-1)
+
+  for obj in objs:
+    if "body" in obj.name:
+      bpy.ops.object.select_all(action='DESELECT')
+      obj.select_set(True)
+      bpy.ops.object.delete() 
+      break
+
+if "sphere" in folder:
+  cameraLocation = Vector((+5,0,+2))
+
+  lightLocation = Vector((8,0,0))
+  addLightSourcePoint(lightLocation)
+
+  name = "spherespace"
+  sphere_mesh = bpy.data.meshes.new(name)
+  sphere_obj = bpy.data.objects.new(name, sphere_mesh)
+  bpy.context.collection.objects.link(sphere_obj)
+
+  ## select active object
+  bpy.context.view_layer.objects.active = sphere_obj
+  sphere_obj.select_set(True)
+
+  ## add mesh
+  bm = bmesh.new()
+  bmesh.ops.create_uvsphere(bm, u_segments=64, v_segments=32,
+      diameter=1.0)
+  bm.to_mesh(sphere_mesh)
+  bm.free()
+
+  bpy.ops.object.modifier_add(type='SUBSURF')
+  bpy.ops.object.shade_smooth()
+
+  ## add color
+  sphere_obj.active_material = torusMaterial
+
+  #################################################################################
+  #### PUNCTURING OF SPHERE
+  #################################################################################
+  sphere_obj.data.materials.append(torusMaterial)
+  sphere_obj.show_transparent = True #  displays trans in viewport
+
+  bpy.ops.object.modifier_add(type='SUBSURF')
+  bpy.ops.object.shade_smooth()
+
+  bpy.ops.object.select_all(action='DESELECT')
+
+  mesh = bpy.data.meshes.new('Basic_Sphere')
+  basic_sphere = bpy.data.objects.new("Basic_Sphere", mesh)
+  basic_sphere.location = basic_sphere.location + Vector([-1,0,0])
+  bpy.context.collection.objects.link(basic_sphere)
+  bpy.context.view_layer.objects.active = basic_sphere
+  basic_sphere.select_set(True)
+  bm = bmesh.new()
+  bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, diameter=0.5)
+  bm.to_mesh(mesh)
+  bm.free()
+
+  mesh = bpy.data.meshes.new('Basic_Sphere2')
+  basic_sphere_two = bpy.data.objects.new("Basic_Sphere2", mesh)
+  basic_sphere_two.location = basic_sphere_two.location + Vector([+1,0,0])
+  bpy.context.collection.objects.link(basic_sphere_two)
+  bpy.context.view_layer.objects.active = basic_sphere_two
+  basic_sphere_two.select_set(True)
+  bm = bmesh.new()
+  bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, diameter=0.5)
+  bm.to_mesh(mesh)
+  bm.free()
+
+  # torus_obj.select_set(True)
+  bpy.context.view_layer.objects.active = sphere_obj
+
+  bool_mod = sphere_obj.modifiers.new(type="BOOLEAN", name="bool1")
+  bool_mod.operation = 'DIFFERENCE'
+  bool_mod.object = basic_sphere
+  bpy.ops.object.modifier_apply(modifier=bool_mod.name)
+
+  bool_mod = sphere_obj.modifiers.new(type="BOOLEAN", name="bool2")
+  bool_mod.operation = 'DIFFERENCE'
+  bool_mod.object = basic_sphere_two
+  bpy.ops.object.modifier_apply(modifier=bool_mod.name)
+
+  bpy.ops.object.select_all(action='DESELECT')
+  basic_sphere.select_set(True)
+  bpy.ops.object.delete() 
+  basic_sphere_two.select_set(True)
+  bpy.ops.object.delete() 
+
+if "multigoal" in folder:
+  cameraLocation = Vector((+0.0,0,+11)) #passage
+  sizeStates = 0.3
+
+if "torus" in folder:
+  cameraLocation = Vector((+6,0,+6)) #torus
+  torusMajorRadius = 1
+  torusMinorRadius = 0.6
+  torus_mesh = bpy.ops.mesh.primitive_torus_add(major_radius = torusMajorRadius,
+      minor_radius = torusMinorRadius,
+      major_segments = 64, minor_segments = 32, location=(0,0,0))
+  torus_obj = bpy.context.object
+  torus_obj.name = 'Torus'
+
+  torusMaterial.use_nodes=True
+  nodes = torusMaterial.node_tree.nodes
+  for node in nodes:
+      nodes.remove(node)
+  links = torusMaterial.node_tree.links
+
+  node_output  = nodes.new(type='ShaderNodeOutputMaterial')
+  node_output.location = 400,0
+  node_pbsdf    = nodes.new(type='ShaderNodeBsdfPrincipled')
+  node_pbsdf.location = 0,0
+  node_pbsdf.inputs['Base Color'].default_value = torusMaterial.diffuse_color
+  node_pbsdf.inputs['Alpha'].default_value = 0.3 # 1 is opaque, 0 is invisible
+  node_pbsdf.inputs['Roughness'].default_value = 0.2
+  node_pbsdf.inputs['Specular'].default_value = 0.9
+  node_pbsdf.inputs['Transmission'].default_value = 0.5 # 1 is fully transparent
+
+  link = links.new(node_pbsdf.outputs['BSDF'], node_output.inputs['Surface'])
+
+  torusMaterial.blend_method = 'HASHED'
+  torusMaterial.shadow_method = 'HASHED'
+  torusMaterial.use_screen_refraction = True
+
+  #################################################################################
+  #### PUNCTURING OF TORUS
+  #################################################################################
+  torus_obj.data.materials.append(torusMaterial)
+  torus_obj.show_transparent = True #  displays trans in viewport
+
+  bpy.ops.object.modifier_add(type='SUBSURF')
+  bpy.ops.object.shade_smooth()
+
+
+  bpy.ops.object.select_all(action='DESELECT')
+
+  mesh = bpy.data.meshes.new('Basic_Sphere')
+  basic_sphere = bpy.data.objects.new("Basic_Sphere", mesh)
+  basic_sphere.location = basic_sphere.location + Vector([0,1,0.5])
+
+  bpy.context.collection.objects.link(basic_sphere)
+  bpy.context.view_layer.objects.active = basic_sphere
+  basic_sphere.select_set(True)
+  bm = bmesh.new()
+  bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, diameter=0.5)
+  bm.to_mesh(mesh)
+  bm.free()
+
+  # torus_obj.select_set(True)
+  bpy.context.view_layer.objects.active = torus_obj
+
+  bool_mod = torus_obj.modifiers.new(type="BOOLEAN", name="bool1")
+  bool_mod.operation = 'DIFFERENCE'
+  bool_mod.object = basic_sphere
+
+  bpy.ops.object.modifier_apply(modifier=bool_mod.name)
+
+  bpy.ops.object.select_all(action='DESELECT')
+  basic_sphere.select_set(True)
+  bpy.ops.object.delete() 
+
+########################################################
+### SET START/GOAL
+########################################################
+setBackgroundColor([1,1,1])
+array = PathArray(folder)
+
+startState = array.getStartState()
 startState = Vector([startState[0],startState[1],startState[2]])
-goalState = Vector([goalState[0],goalState[1],goalState[2]])
-
 addSphere(startState, "startState", color=colorStartState, size=sizeStates)
-addSphere(goalState, "goalState", color=colorGoalState, size=sizeStates)
-########################################################
-### ADD TORUS
-########################################################
 
-torusMajorRadius = 1
-torusMinorRadius = 0.6
-torus_mesh = bpy.ops.mesh.primitive_torus_add(major_radius = torusMajorRadius,
-    minor_radius = torusMinorRadius,
-    major_segments = 64, minor_segments = 32, location=(0,0,0))
-torus_obj = bpy.context.object
-torus_obj.name = 'Torus'
-
-
-################ Additional transparency
-torusMaterial.use_nodes=True
-nodes = torusMaterial.node_tree.nodes
-    # clear all nodes to start clean
-for node in nodes:
-    nodes.remove(node)
-    # link nodes
-links = torusMaterial.node_tree.links
-
-    #create the basic material nodes
-node_output  = nodes.new(type='ShaderNodeOutputMaterial')
-node_output.location = 400,0
-node_pbsdf    = nodes.new(type='ShaderNodeBsdfPrincipled')
-node_pbsdf.location = 0,0
-node_pbsdf.inputs['Base Color'].default_value = torusMaterial.diffuse_color
-node_pbsdf.inputs['Alpha'].default_value = 0.5 # 1 is opaque, 0 is invisible
-node_pbsdf.inputs['Roughness'].default_value = 0.2
-node_pbsdf.inputs['Specular'].default_value = 0.9
-node_pbsdf.inputs['Transmission'].default_value = 0.5 # 1 is fully transparent
-
-link = links.new(node_pbsdf.outputs['BSDF'], node_output.inputs['Surface'])
-
-torusMaterial.blend_method = 'HASHED'
-torusMaterial.shadow_method = 'HASHED'
-torusMaterial.use_screen_refraction = True
-
-torus_obj.data.materials.append(torusMaterial)
-torus_obj.show_transparent = True #  displays trans in viewport
-
-bpy.ops.object.modifier_add(type='SUBSURF')
-bpy.ops.object.shade_smooth()
-
-
-
-################################################################################
-### PUNCTURING OF TORUS
-################################################################################
-
-bpy.ops.object.select_all(action='DESELECT')
-
-mesh = bpy.data.meshes.new('Basic_Sphere')
-basic_sphere = bpy.data.objects.new("Basic_Sphere", mesh)
-basic_sphere.location = basic_sphere.location + Vector([0,1,0.5])
-
-bpy.context.collection.objects.link(basic_sphere)
-bpy.context.view_layer.objects.active = basic_sphere
-basic_sphere.select_set(True)
-bm = bmesh.new()
-bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, diameter=0.5)
-bm.to_mesh(mesh)
-bm.free()
-
-# torus_obj.select_set(True)
-bpy.context.view_layer.objects.active = torus_obj
-
-
-bool_mod = torus_obj.modifiers.new(type="BOOLEAN", name="bool1")
-bool_mod.operation = 'DIFFERENCE'
-bool_mod.object = basic_sphere
-
-bpy.ops.object.modifier_apply(modifier=bool_mod.name)
-
-bpy.ops.object.select_all(action='DESELECT')
-basic_sphere.select_set(True)
-bpy.ops.object.delete() 
+goalStates = array.getGoalStates()
+for goalState in goalStates:
+  goalState = Vector([goalState[0],goalState[1],goalState[2]])
+  addSphere(goalState, "goalState", color=colorGoalState, size=sizeStates)
 
 ################################################################################
 ### LIGHTNING & CAMERA
@@ -189,37 +363,12 @@ camera = Camera(cameraLocation, cameraFocusPoint)
 ################################################################################
 ### RENDERING
 ################################################################################
+bpy.context.scene.frame_end += 100
 
-bpy.context.scene.eevee.use_ssr = True
-bpy.context.scene.eevee.use_ssr_refraction = True
+render = RenderEngine(folder)
 
-#### VIDEO (MP4)
-renderEngine = bpy.context.scene.render
-renderEngine.image_settings.file_format = "FFMPEG"
-renderEngine.ffmpeg.format = "MPEG4"
-renderEngine.ffmpeg.codec = "H264"
-renderEngine.ffmpeg.constant_rate_factor = "HIGH" #MEDIUM, LOW
-renderEngine.filepath = dirname+"/"+filename+".mp4"
+# render.LastFrameToPNG(filename = dirname+"/"+filename+'.png')
 
-#### IMAGE (PNG)
-# renderEngine = bpy.context.scene.render
-# renderEngine.film_transparent = True
-# renderEngine.image_settings.file_format = "PNG"
-# renderEngine.image_settings.color_mode = 'RGBA'
-# renderEngine.filepath = dirname+"/"+filename+'.png'
-# bpy.ops.render.render(write_still = True)
-
-# renderEngine.filepath = dirname+"/"+filename+'.png'
-# ff = renderEngine.filepath
-# os.system("convert -trim %s %s"%(ff,ff))
-# print(renderEngine.filepath)
-
-
-### Render Animation to MP4 video
-# if renderAnimation:
-#   print("Starting to render %d frames."% bpy.context.scene.frame_end)
-#   bpy.ops.render.render(animation=True)
-
-# elapsed_time = time.process_time() - time_start_script
-# print("TIME for RENDERING: %f (in s), %f (in m), %f (in h)"%\
-#     (elapsed_time,elapsed_time/60,elapsed_time/60/60))
+elapsed_time = time.process_time() - time_start_script
+print("TIME for RENDERING: %f (in s), %f (in m), %f (in h)"%\
+    (elapsed_time,elapsed_time/60,elapsed_time/60/60))

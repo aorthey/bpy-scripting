@@ -303,9 +303,10 @@ def getVectorOnStrip(x_1, x_2):
     return rot2 @ (c1 + rot1 @ Vector([0, 0, dx]) )
 
 
-def addSphere(pos, name, color=(1.0, 1.0, 1.0, 1.0), size=diameterState):
-    xi_mesh = bpy.data.meshes.new("init_state_mesh_"+name)
-    xi_obj = bpy.data.objects.new("init_state_"+name, xi_mesh)
+def addSphere(pos, name, color=(1.0, 1.0, 1.0, 1.0), size=diameterState,
+    u_segment=4, v_segment=2):
+    xi_mesh = bpy.data.meshes.new(name)
+    xi_obj = bpy.data.objects.new(name, xi_mesh)
     xi_obj.location = xi_obj.location + pos
 
     bpy.context.collection.objects.link(xi_obj)
@@ -316,7 +317,7 @@ def addSphere(pos, name, color=(1.0, 1.0, 1.0, 1.0), size=diameterState):
 
     ## add mesh
     bm = bmesh.new()
-    bmesh.ops.create_uvsphere(bm, u_segments=4, v_segments=2,
+    bmesh.ops.create_uvsphere(bm, u_segments=u_segment, v_segments=v_segment,
         diameter=size)
     bm.to_mesh(xi_mesh)
     bm.free()
@@ -585,6 +586,17 @@ def addBezierCurve(name, N =20, thickness=0.02):
 glass = MaterialGlass()
 def addMaterialGlass(obj):
   return addMaterialToObject(obj, glass.material)
+
+def setBackgroundColor(color):
+  world = bpy.context.scene.world
+  if world is None:
+    new_world = bpy.data.worlds.new("New World")
+    world = new_world
+  world.use_nodes = True
+  bg = world.node_tree.nodes['Background']
+  bg.inputs[0].default_value[:3] = (color[0],color[1],color[2])
+  bg.inputs[1].default_value = 0.0
+
 
 def addMaterialToObject(obj, material):
   if obj.data.materials:
