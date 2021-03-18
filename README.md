@@ -1,6 +1,6 @@
 # Bpy-Scripting
 
-![](https://raw.githubusercontent.com/aorthey/bpy-scripting/main/output/all_robots.png)
+![](https://raw.githubusercontent.com/aorthey/bpy-scripting/main/output/manipulator.png)
 
 
 
