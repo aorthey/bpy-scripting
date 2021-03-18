@@ -2,9 +2,9 @@
 
 ![](https://raw.githubusercontent.com/aorthey/bpy-scripting/main/output/manipulator.png)
 ![](https://raw.githubusercontent.com/aorthey/bpy-scripting/main/output/well.png)
+
+
 ![](https://raw.githubusercontent.com/aorthey/bpy-scripting/main/output/2D_torus.png)
-
-
 
 Set of scripts to generate photo-realistic animations in blender. Input to the
 scripts are a collada file describing the scene and a text file Anim.txt which
