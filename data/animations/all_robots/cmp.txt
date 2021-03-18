@@ -1,0 +1,48 @@
+b0
+	retract
+		Shortcut 246406
+		RRT 61896
+	pick
+		Sampler_Evals 2
+		Sampler 678467
+		RRT 704238
+		Sampler_Valid 2
+		Shortcut 204059
+	place
+		Sampler_Evals 9
+		Sampler 651729
+		RRT 675387
+		Sampler_Valid 7
+		Shortcut 239059
+b1
+	retract
+		Shortcut 313256
+		RRT 74170
+	pick
+		Sampler_Evals 3
+		Sampler 988975
+		RRT 1115474
+		Sampler_Valid 3
+		Shortcut 343395
+	place
+		Sampler_Evals 4
+		Sampler 185152
+		RRT 236046
+		Sampler_Valid 4
+		Shortcut 472462
+b2
+	retract
+		Shortcut 154200
+		RRT 154385
+	pick
+		Sampler_Evals 5
+		Sampler 1089331
+		RRT 1098602
+		Sampler_Valid 2
+		Shortcut 100424
+	place
+		Sampler_Evals 35
+		Sampler 929905
+		RRT 1014580
+		Sampler_Valid 2
+		Shortcut 1021032

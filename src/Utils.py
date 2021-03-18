@@ -4,7 +4,7 @@ import numpy as np
 from math import *
 from mathutils import *
 
-from Material import *
+from src.Material import *
 
 distanceCamera = 35
 cameraFocusPoint = Vector((0,-8,-7))
@@ -547,41 +547,9 @@ def addBezierCurve(name, N =20, thickness=0.02):
 
   curve.fill_mode = 'FULL'
   curve.bevel_depth = thickness
-
-  #materialRose.use_nodes=True
-  #nodes = materialRose.node_tree.nodes
-  #for node in nodes:
-  #  nodes.remove(node)
-  #links = materialRose.node_tree.links
-
-  ##create the basic material nodes
-  #node_output  = nodes.new(type='ShaderNodeOutputMaterial')
-  #node_output.location = 400,0
-  #node_pbsdf    = nodes.new(type='ShaderNodeBsdfPrincipled')
-  #node_pbsdf.location = 0,0
-  #node_pbsdf.inputs['Base Color'].default_value = seasideSpray
-  #node_pbsdf.inputs['Alpha'].default_value = 1 # 1 is opaque, 0 is invisible
-  #node_pbsdf.inputs['Roughness'].default_value = 0.2
-  #node_pbsdf.inputs['Specular'].default_value = 0.5
-  #node_pbsdf.inputs['Transmission'].default_value = 0.5 # 1 is fully transparent
-
-  #link = links.new(node_pbsdf.outputs['BSDF'], node_output.inputs['Surface'])
-
-  #materialRose.blend_method = 'HASHED'
-  #materialRose.shadow_method = 'HASHED'
-  #materialRose.use_screen_refraction = True
-  #bpy.context.scene.eevee.use_ssr = True
-  #bpy.context.scene.eevee.use_ssr_refraction = True
-
   curveObject.data.materials.append(materialRose)
   curveObject.show_transparent = True
   return curveObject
-
-# def addMaterialConcrete(obj):
-#   return addTextureMaterial(obj, materialConcrete.material)
-
-# def addMaterialWood(obj, color):
-#   return addTextureMaterial(obj, materialWood.material)
 
 glass = MaterialGlass()
 def addMaterialGlass(obj):
@@ -596,7 +564,6 @@ def setBackgroundColor(color):
   bg = world.node_tree.nodes['Background']
   bg.inputs[0].default_value[:3] = (color[0],color[1],color[2])
   bg.inputs[1].default_value = 0.0
-
 
 def addMaterialToObject(obj, material):
   if obj.data.materials:
