@@ -10,6 +10,7 @@ class RenderEngine():
 
 #### IMAGE (PNG)
   def LastFrameToPNG(self, filename):
+
     bpy.context.scene.frame_set(bpy.context.scene.frame_end)
     renderEngine = bpy.context.scene.render
     renderEngine.film_transparent = True
@@ -19,7 +20,7 @@ class RenderEngine():
     bpy.ops.render.render(write_still = True)
     ff = renderEngine.filepath
     os.system("convert -trim %s %s"%(ff,ff))
-    print("Render Image to :",renderEngine.filepath)
+    print("Render Image [frame %d] to :%s"%(bpy.context.scene.frame_end,renderEngine.filepath))
 
   def ToMP4(self, filename):
     #### VIDEO (MP4)

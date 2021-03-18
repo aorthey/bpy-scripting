@@ -18,12 +18,14 @@ time_start_script = time.process_time()
 ########################################################
 # CUSTOM SETTINGS
 ########################################################
-Nsegments = 2 #display N segments. -1: display all segments
+Nsegments = 1 #display N segments. -1: display all segments
 NkeyframeSteps = 10 #use every n-th keyframe, interpolate inbetween
 
 renderAnimation = False
 renderImage = True
 doZoom=True
+doZoomOut=False
+
 tPaddingEnd = 250 #number of frames to append after algorithms converged
 tZoomStart = 100
 tZoomOutDuration = 25
@@ -58,6 +60,7 @@ camera = Camera(cameraLocation, cameraFocusPoint)
 
 if doZoom:
     camera.zoomIn(tZoomStart, tZoomStart+50)
+if doZoomOut:
     camera.zoomOut(tZoomStart+50+50, tZoomStart+50+50+tZoomOutDuration)
 camera.rotate(tRotationStart, tend)
 
@@ -74,10 +77,10 @@ for area in bpy.context.screen.areas:
 render = RenderEngine(folder)
 
 if renderImage:
-  render.LastFrameToPNG(filename = dirname+"/"+filename+'.png')
+  render.LastFrameToPNG(filename = dirname+"/output/"+filename+'.png')
 
 if renderAnimation:
-  render.toMP4(dirname+"/"+filename+".mp4")
+  render.toMP4(dirname+"/output/"+filename+".mp4")
 
 elapsed_time = time.process_time() - time_start_script
 print("TIME for RENDERING: %f (in s), %f (in m), %f (in h)"%\
