@@ -1,5 +1,9 @@
 # Bpy-Scripting
 
+![](https://raw.githubusercontent.com/aorthey/bpy-scripting/main/output/all_robots.png)
+
+
+
 Set of scripts to generate photo-realistic animations in blender. Input to the
 scripts are a collada file describing the scene and a text file Anim.txt which
 describes how things move. Output can either be single image (at a specific
