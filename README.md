@@ -1,6 +1,6 @@
 # Bpy-Scripting
 
-![Robot in Blender](./output/all_robots.png =250x)
+![](https://raw.githubusercontent.com/aorthey/bpy-scripting/main/output/all_robots.png)
 
 
 
