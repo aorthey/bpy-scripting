@@ -1,6 +1,5 @@
 import bpy
 import bmesh
-
 import numpy as np
 import sys, os 
 import re
@@ -13,10 +12,9 @@ from src.RaiAnim import *
 from src.Camera import *
 from src.Path import Path
 from src.PathArray import PathArray
-from src.Colors import materialMagenta
+from src.Colors import materialWhiteTransparent
 from src.RenderEngine import RenderEngine
-
-#[ ] automate camera selection for each scenario
+from src.CuttingTools import CuttingTools
 
 time_start_script = time.process_time()
 
@@ -27,12 +25,13 @@ sizeStates = 0.15
 renderAnimation=False
 renderImage=False
 folder = "data/modes/passage/"
-folder = "data/modes/torus/"
-folder = "data/modes/sphere/"
 folder = "data/modes/multigoal/"
 folder = "data/modes/lattice/"
 folder = "data/modes/rod/"
 folder = "data/modes/jaillet/"
+folder = "data/modes/kleinbottle/"
+folder = "data/modes/sphere/"
+folder = "data/modes/torus/"
 
 filename = os.path.basename(os.path.dirname(folder))
 
@@ -42,10 +41,6 @@ bpy.ops.object.delete()
 ########################################################
 ## DEFINE COLORS
 ########################################################
-torusMaterial = bpy.data.materials.new(name="Gray")
-torusMaterial.diffuse_color = (0.9, 0.9, 0.9, 1.0)
-torusMaterial.metallic = 0.3
-torusMaterial.specular_intensity = 0.9
 
 bpy.context.scene.frame_start = 0
 bpy.context.scene.frame_end = 0
@@ -80,6 +75,57 @@ if "lattice" in folder:
       obj.select_set(True)
       bpy.ops.object.delete() 
       break
+
+if "kleinbottle" in folder:
+  cameraLocation = Vector((-1.7,4.7,9.3))
+  cameraFocusPoint = Vector((-0.0,2.3,0))
+
+  lightLocation = Vector((0,4,11))
+  addLightSourcePoint(lightLocation)
+
+  ## NOTE: Please enable addon "Extra Objects: Mesh"
+  a = "(3*cos(v) - 30*sin(u) + 90*pow(cos(u),4)*sin(u)-60*pow(cos(u),6)*sin(u)+5*cos(u)*cos(v)*sin(u))"
+
+  b = "(3*cos(v) - 3*pow(cos(u),2)*cos(v) - 48*pow(cos(u),4)*cos(v) \
+  + 48*pow(cos(u),6)*cos(v)\
+  -60*sin(u) + 5*cos(u)*cos(v)*sin(u)  \
+  -5*pow(cos(u),3)*cos(v)*sin(u)-80*pow(cos(u),5)*cos(v)*sin(u) \
+  + 80*pow(cos(u),7)*cos(v)*sin(u))"
+
+  x_eq = "-2.0/15.0*cos(u)*"+a;
+  y_eq = "-1.0/15.0*sin(u)*"+b
+  z_eq = "2.0/15.0 * (3+5*cos(u)*sin(u)) * sin(v)"
+
+  kleinbottle_mesh = bpy.ops.mesh.primitive_xyz_function_surface(\
+      x_eq = x_eq, \
+      y_eq = y_eq, \
+      z_eq = z_eq, 
+			range_u_min=0, 
+			range_u_max=pi,
+			range_u_step=256, 
+			wrap_u = False,
+			range_v_min=0.0, 
+			range_v_max=2*pi,
+			range_v_step=128, 
+			wrap_v = True)
+      # range_u_step=128)
+
+  bpy.context.object.name = 'kleinbottle'
+  kleinbottle_obj = bpy.data.objects['kleinbottle']
+  kleinbottle_obj = bpy.context.active_object
+
+  ## NOTE: primitive_xyz_function_surface sets mode to EDIT
+  bpy.ops.object.mode_set(mode='OBJECT') 
+
+  #################################################################################
+  #### PUNCTURING OF KLEINBOTTLE
+  #################################################################################
+  kleinbottle_obj.data.materials.append(materialWhiteTransparent)
+  kleinbottle_obj.show_transparent = True #  displays trans in viewport
+
+  cutter = CuttingTools()
+  cutter.CutSphericalHole(kleinbottle_obj, location = Vector([0,1.3,0.8]), diameter=0.5)
+
 
 if "jaillet" in folder:
   lightLocation = Vector((-8,0,+6))
@@ -135,28 +181,7 @@ if "rod" in folder:
       obj.keyframe_insert(data_path="rotation_quaternion", index=-1)
       obj.keyframe_insert(data_path="location", index=-1)
 
-      torusMaterial.use_nodes=True
-      nodes = torusMaterial.node_tree.nodes
-      for node in nodes:
-          nodes.remove(node)
-      links = torusMaterial.node_tree.links
-
-      node_output  = nodes.new(type='ShaderNodeOutputMaterial')
-      node_output.location = 400,0
-      node_pbsdf    = nodes.new(type='ShaderNodeBsdfPrincipled')
-      node_pbsdf.location = 0,0
-      node_pbsdf.inputs['Base Color'].default_value = torusMaterial.diffuse_color
-      node_pbsdf.inputs['Alpha'].default_value = 0.4 # 1 is opaque, 0 is invisible
-      node_pbsdf.inputs['Roughness'].default_value = 0.1
-      node_pbsdf.inputs['Specular'].default_value = 0.5
-      node_pbsdf.inputs['Transmission'].default_value = 0.7 # 1 is fully transparent
-
-      link = links.new(node_pbsdf.outputs['BSDF'], node_output.inputs['Surface'])
-
-      torusMaterial.blend_method = 'HASHED'
-      torusMaterial.shadow_method = 'HASHED'
-      torusMaterial.use_screen_refraction = True
-      addMaterialToObject(obj, torusMaterial)
+      addMaterialToObject(obj, materialWhiteTransparent)
 
   for obj in objs:
     if "body" in obj.name:
@@ -210,59 +235,17 @@ if "sphere" in folder:
   bpy.ops.object.shade_smooth()
 
   ## add color
-  sphere_obj.active_material = torusMaterial
+  sphere_obj.active_material = materialWhiteTransparent
 
   #################################################################################
   #### PUNCTURING OF SPHERE
   #################################################################################
-  sphere_obj.data.materials.append(torusMaterial)
+  sphere_obj.data.materials.append(materialWhiteTransparent)
   sphere_obj.show_transparent = True #  displays trans in viewport
 
-  bpy.ops.object.modifier_add(type='SUBSURF')
-  bpy.ops.object.shade_smooth()
-
-  bpy.ops.object.select_all(action='DESELECT')
-
-  mesh = bpy.data.meshes.new('Basic_Sphere')
-  basic_sphere = bpy.data.objects.new("Basic_Sphere", mesh)
-  basic_sphere.location = basic_sphere.location + Vector([-1,0,0])
-  bpy.context.collection.objects.link(basic_sphere)
-  bpy.context.view_layer.objects.active = basic_sphere
-  basic_sphere.select_set(True)
-  bm = bmesh.new()
-  bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, diameter=0.5)
-  bm.to_mesh(mesh)
-  bm.free()
-
-  mesh = bpy.data.meshes.new('Basic_Sphere2')
-  basic_sphere_two = bpy.data.objects.new("Basic_Sphere2", mesh)
-  basic_sphere_two.location = basic_sphere_two.location + Vector([+1,0,0])
-  bpy.context.collection.objects.link(basic_sphere_two)
-  bpy.context.view_layer.objects.active = basic_sphere_two
-  basic_sphere_two.select_set(True)
-  bm = bmesh.new()
-  bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, diameter=0.5)
-  bm.to_mesh(mesh)
-  bm.free()
-
-  # torus_obj.select_set(True)
-  bpy.context.view_layer.objects.active = sphere_obj
-
-  bool_mod = sphere_obj.modifiers.new(type="BOOLEAN", name="bool1")
-  bool_mod.operation = 'DIFFERENCE'
-  bool_mod.object = basic_sphere
-  bpy.ops.object.modifier_apply(modifier=bool_mod.name)
-
-  bool_mod = sphere_obj.modifiers.new(type="BOOLEAN", name="bool2")
-  bool_mod.operation = 'DIFFERENCE'
-  bool_mod.object = basic_sphere_two
-  bpy.ops.object.modifier_apply(modifier=bool_mod.name)
-
-  bpy.ops.object.select_all(action='DESELECT')
-  basic_sphere.select_set(True)
-  bpy.ops.object.delete() 
-  basic_sphere_two.select_set(True)
-  bpy.ops.object.delete() 
+  cutter = CuttingTools()
+  cutter.CutSphericalHole(sphere_obj, location = Vector([1,0,0]), diameter=0.5)
+  cutter.CutSphericalHole(sphere_obj, location = Vector([-1,0,0]), diameter=0.5)
 
 if "multigoal" in folder:
   cameraLocation = Vector((+0.0,0,+11)) #passage
@@ -278,64 +261,15 @@ if "torus" in folder:
   torus_obj = bpy.context.object
   torus_obj.name = 'Torus'
 
-  torusMaterial.use_nodes=True
-  nodes = torusMaterial.node_tree.nodes
-  for node in nodes:
-      nodes.remove(node)
-  links = torusMaterial.node_tree.links
-
-  node_output  = nodes.new(type='ShaderNodeOutputMaterial')
-  node_output.location = 400,0
-  node_pbsdf    = nodes.new(type='ShaderNodeBsdfPrincipled')
-  node_pbsdf.location = 0,0
-  node_pbsdf.inputs['Base Color'].default_value = torusMaterial.diffuse_color
-  node_pbsdf.inputs['Alpha'].default_value = 0.3 # 1 is opaque, 0 is invisible
-  node_pbsdf.inputs['Roughness'].default_value = 0.2
-  node_pbsdf.inputs['Specular'].default_value = 0.9
-  node_pbsdf.inputs['Transmission'].default_value = 0.5 # 1 is fully transparent
-
-  link = links.new(node_pbsdf.outputs['BSDF'], node_output.inputs['Surface'])
-
-  torusMaterial.blend_method = 'HASHED'
-  torusMaterial.shadow_method = 'HASHED'
-  torusMaterial.use_screen_refraction = True
-
   #################################################################################
   #### PUNCTURING OF TORUS
   #################################################################################
-  torus_obj.data.materials.append(torusMaterial)
+  torus_obj.data.materials.append(materialWhiteTransparent)
   torus_obj.show_transparent = True #  displays trans in viewport
 
-  bpy.ops.object.modifier_add(type='SUBSURF')
-  bpy.ops.object.shade_smooth()
-
-
-  bpy.ops.object.select_all(action='DESELECT')
-
-  mesh = bpy.data.meshes.new('Basic_Sphere')
-  basic_sphere = bpy.data.objects.new("Basic_Sphere", mesh)
-  basic_sphere.location = basic_sphere.location + Vector([0,1,0.5])
-
-  bpy.context.collection.objects.link(basic_sphere)
-  bpy.context.view_layer.objects.active = basic_sphere
-  basic_sphere.select_set(True)
-  bm = bmesh.new()
-  bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, diameter=0.5)
-  bm.to_mesh(mesh)
-  bm.free()
-
-  # torus_obj.select_set(True)
-  bpy.context.view_layer.objects.active = torus_obj
-
-  bool_mod = torus_obj.modifiers.new(type="BOOLEAN", name="bool1")
-  bool_mod.operation = 'DIFFERENCE'
-  bool_mod.object = basic_sphere
-
-  bpy.ops.object.modifier_apply(modifier=bool_mod.name)
-
-  bpy.ops.object.select_all(action='DESELECT')
-  basic_sphere.select_set(True)
-  bpy.ops.object.delete() 
+  ### DELETE INNER VERTICES
+  cutter = CuttingTools()
+  cutter.CutSphericalHole(torus_obj, location = Vector([0,1,0.5]), diameter=0.5)
 
 ########################################################
 ### SET START/GOAL
