@@ -18,10 +18,10 @@ time_start_script = time.process_time()
 ########################################################
 # CUSTOM SETTINGS
 ########################################################
-Nsegments = 1 #display N segments. -1: display all segments
-NkeyframeSteps = 1 #use every n-th keyframe, interpolate inbetween
+Nsegments = -1 #display N segments. -1: display all segments
+NkeyframeSteps = 10 #use every n-th keyframe, interpolate inbetween
 
-renderAnimation = True
+renderAnimation = False
 renderImage = True
 doZoom=False
 doZoomOut=False
