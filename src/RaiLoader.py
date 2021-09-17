@@ -14,7 +14,8 @@ class RaiLoader():
     bpy.ops.object.delete()
 
     fname = os.path.abspath(foldername + "initial.dae")
-    self.anim = Anim(foldername + "/Anim.txt")
+    print(fname)
+    self.anim = Anim(foldername + "Anim.txt")
 
     c = bpy.ops.wm.collada_import(filepath=fname, import_units=True, auto_connect=False)
 

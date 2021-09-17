@@ -21,7 +21,7 @@ time_start_script = time.process_time()
 Nsegments = 1 #display N segments. -1: display all segments
 NkeyframeSteps = 10 #use every n-th keyframe, interpolate inbetween
 
-renderAnimation = False
+renderAnimation = True
 renderImage = True
 doZoom=True
 doZoomOut=False
@@ -33,7 +33,10 @@ tRotationStart = tZoomStart + 200
 cameraLocation = Vector((-6,-12,+5))
 cameraFocusPoint = Vector((0,0,0))
 
-folder = "data/animations/all_robots/"
+# folder = "data/anim/mobile/"
+# folder = "data/animations/all_robots/"
+folder = "data/Valentino17092021/"
+
 filename = os.path.basename(os.path.dirname(folder))
 ########################################################
 # Load collada file and preprocess the objects
@@ -80,7 +83,7 @@ if renderImage:
   render.LastFrameToPNG(filename = dirname+"/output/"+filename+'.png')
 
 if renderAnimation:
-  render.toMP4(dirname+"/output/"+filename+".mp4")
+  render.ToMP4(dirname+"/output/"+filename+".mp4")
 
 elapsed_time = time.process_time() - time_start_script
 print("TIME for RENDERING: %f (in s), %f (in m), %f (in h)"%\

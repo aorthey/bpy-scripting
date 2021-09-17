@@ -111,6 +111,8 @@ class Anim():
           break
         
         p = re.match(r'.*<([0-9]+)> (.*)]', lineNames)
+        if not p:
+          print("No match")
         framename = p.group(2)
         names = framename.split(" ")
 
