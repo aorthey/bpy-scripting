@@ -3,7 +3,7 @@ import numpy as np
 import sys, os 
 from src.Path import Path
 
-curveMaterial = bpy.data.materials.new(name="Curve")
+curveMaterial = bpy.data.materials.new(name="CurveMaterial")
 curveMaterial.diffuse_color = (0.08, 0.7, 0.08, 1.0)
 curveMaterial.diffuse_color = (0.9, 0.01, 0.01, 1.0)
 curveMaterial.metallic = 0.7
@@ -23,6 +23,8 @@ class PathArray():
       self.array.append(path)
 
     for path in self.array:
+      # if "curve8" in path.name:
+      #   continue
       print(path.name,":",len(path.keyframes)," ",path.timeStart," ",path.timeEnd)
 
       curve = self.addBezierCurve(path.name, N=path.Nstates-1)
@@ -30,7 +32,7 @@ class PathArray():
       curve.data.materials.append(curveMaterial)
       curve.show_transparent = True
 
-      self.curves[path.name] = curve
+      # self.curves[path.name] = curve
 
       curve.hide_render = True
       curve.keyframe_insert(data_path="hide_render", frame=0)
@@ -59,10 +61,11 @@ class PathArray():
           p.co= (state[0], state[1], state[2], 1)
           p.keyframe_insert(data_path="co")
 
+
   def addBezierCurve(self, name, N, thickness=0.02):
-    curve = bpy.data.curves.new(name="Mode"+name, type='CURVE')
+    curve = bpy.data.curves.new(name="Geometry_"+name, type='CURVE')
     curve.dimensions = '3D'
-    curveObject = bpy.data.objects.new("path", curve)
+    curveObject = bpy.data.objects.new("PathObject_"+name, curve)
     curveObject.location = (0,0,0)
 
     ### create milestones

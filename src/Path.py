@@ -41,8 +41,9 @@ class Path():
         N = len(states)
         if N > self.Nstates:
           self.Nstates = N
+
     for keyframe in keyframes:
-        time = float(keyframe.getAttribute('time'))
+        time = int(float(keyframe.getAttribute('time')))
         if time > self.timeEnd:
           self.timeEnd = time
         if time < self.timeStart:
@@ -67,7 +68,6 @@ class Path():
           P = np.append(P, p, axis=0)
 
         P = P.astype(float)
-
 
         self.keyframes.append(PathKeyframe(self.name, time, P))
 

@@ -8,7 +8,6 @@ dirname = os.path.dirname(os.path.realpath(__file__+"/.."))
 sys.path.append(dirname)
 
 from src.Utils import *
-from src.RaiAnim import *
 from src.Camera import *
 from src.Path import Path
 from src.PathArray import PathArray
@@ -30,13 +29,32 @@ folder = "data/modes/lattice/"
 folder = "data/modes/rod/"
 folder = "data/modes/jaillet/"
 folder = "data/modes/kleinbottle/"
-folder = "data/modes/sphere/"
 folder = "data/modes/torus/"
+folder = "data/modes/sphere/"
+folder = "data/modes/mobius/"
 
 filename = os.path.basename(os.path.dirname(folder))
 
+for o in bpy.context.scene.objects:
+  o.animation_data_clear()
+bpy.context.scene.animation_data_clear()
+
+for o in bpy.data.objects:
+  o.animation_data_clear()
+
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.object.delete()
+for a in bpy.data.actions:
+  bpy.data.actions.remove(a)
+
+for o in bpy.context.scene.objects:
+  o.select_set(True)
+bpy.ops.object.delete()
+
+bpy.ops.object.select_by_type(type='CURVE')
+bpy.ops.object.delete()
+
+
 
 ########################################################
 ## DEFINE COLORS
@@ -75,6 +93,44 @@ if "lattice" in folder:
       obj.select_set(True)
       bpy.ops.object.delete() 
       break
+
+
+if "mobius" in folder:
+  cameraLocation = Vector((3.41,-3.02,2.14))
+  cameraFocusPoint = Vector((-0.0,0.0,-0.15))
+
+  R = "(1.0 + v*cos(0.5*u))"
+  x_eq = R+"*cos(u)"
+  y_eq = R+"*sin(u)"
+  z_eq = "v*sin(0.5*u)"
+  mobius_mesh = bpy.ops.mesh.primitive_xyz_function_surface(\
+      x_eq = x_eq, \
+      y_eq = y_eq, \
+      z_eq = z_eq, 
+			range_u_min=-pi, 
+			range_u_max=pi,
+			range_u_step=256, 
+			wrap_u = False,
+			range_v_min=-0.5, 
+			range_v_max=+0.5,
+			range_v_step=64, 
+			wrap_v = False)
+
+  bpy.context.object.name = 'mobius'
+  mobius_obj = bpy.data.objects['mobius']
+  mobius_obj = bpy.context.active_object
+
+  ## NOTE: primitive_xyz_function_surface sets mode to EDIT
+  bpy.ops.object.mode_set(mode='OBJECT') 
+
+  #################################################################################
+  #### PUNCTURING OF MOBIUS STRIP
+  #################################################################################
+  mobius_obj.data.materials.append(materialWhiteTransparent)
+  mobius_obj.show_transparent = True #  displays trans in viewport
+
+  cutter = CuttingTools()
+  cutter.CutSphericalHole(mobius_obj, location = Vector([0,1.3,-0.3]), diameter=0.5)
 
 if "kleinbottle" in folder:
   cameraLocation = Vector((-1.7,4.7,9.3))
@@ -274,17 +330,17 @@ if "torus" in folder:
 ########################################################
 ### SET START/GOAL
 ########################################################
-setBackgroundColor([1,1,1])
-array = PathArray(folder)
+# setBackgroundColor([1,1,1])
+# array = PathArray(folder)
 
-startState = array.getStartState()
-startState = Vector([startState[0],startState[1],startState[2]])
-addSphere(startState, "startState", color=colorStartState, size=sizeStates)
+# startState = array.getStartState()
+# startState = Vector([startState[0],startState[1],startState[2]])
+# addSphere(startState, "startState", color=colorStartState, size=sizeStates)
 
-goalStates = array.getGoalStates()
-for goalState in goalStates:
-  goalState = Vector([goalState[0],goalState[1],goalState[2]])
-  addSphere(goalState, "goalState", color=colorGoalState, size=sizeStates)
+# goalStates = array.getGoalStates()
+# for goalState in goalStates:
+#   goalState = Vector([goalState[0],goalState[1],goalState[2]])
+#   addSphere(goalState, "goalState", color=colorGoalState, size=sizeStates)
 
 ################################################################################
 ### LIGHTNING & CAMERA
