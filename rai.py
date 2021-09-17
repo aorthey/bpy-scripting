@@ -19,14 +19,14 @@ time_start_script = time.process_time()
 # CUSTOM SETTINGS
 ########################################################
 Nsegments = 1 #display N segments. -1: display all segments
-NkeyframeSteps = 10 #use every n-th keyframe, interpolate inbetween
+NkeyframeSteps = 1 #use every n-th keyframe, interpolate inbetween
 
 renderAnimation = True
 renderImage = True
-doZoom=True
+doZoom=False
 doZoomOut=False
 
-tPaddingEnd = 250 #number of frames to append after algorithms converged
+tPaddingEnd = 200 #number of frames to append after algorithms converged
 tZoomStart = 100
 tZoomOutDuration = 25
 tRotationStart = tZoomStart + 200
@@ -35,7 +35,7 @@ cameraFocusPoint = Vector((0,0,0))
 
 # folder = "data/anim/mobile/"
 # folder = "data/animations/all_robots/"
-folder = "data/Valentino17092021/"
+folder = "data/anim/"
 
 filename = os.path.basename(os.path.dirname(folder))
 ########################################################
