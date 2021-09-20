@@ -351,49 +351,16 @@ def addStateAnnulus(x_1, name, color=(1.0, 1.0, 1.0, 1.0), offset = offsetAnnulu
     pos = (rot @ Vector([major_radius, 0, 0])) + offset
     addSphere(pos, name, color)
 
-
-def addLightSourceSun(location):
-
-    light_data = bpy.data.lights.new(name="light_2.80", type='SUN')
-    light_data.energy = 5
-    light_data.angle = 5/180.0
-    light_data.specular_factor = 0.8
-    light_object = bpy.data.objects.new(name="light_2.80",
-      object_data=light_data)
-    bpy.context.collection.objects.link(light_object)
-    light_object.location = location
-
-def addLightSourcePoint(location):
-
-    light_data = bpy.data.lights.new(name="light_2.80", type='POINT')
-    light_data.energy = 6000
-    light_data.specular_factor = 0.4
-    light_data.use_contact_shadow = True
-    light_object = bpy.data.objects.new(name="light_2.80",
-      object_data=light_data)
-    bpy.context.collection.objects.link(light_object)
-    light_object.location = location
-
-def addLightSourceArea(location, size=13, energy=400):
-
-    name = "light_source_area_"+str(location)
-    light_2 = bpy.data.lights.new(name=name, type='AREA')
-    light_2.energy = energy
-    light_2.size = size
-    light_2_object = bpy.data.objects.new(name=name, object_data=light_2)
-    bpy.context.collection.objects.link(light_2_object)
-    light_2_object.location = location
-
-def addCamera(location, focus=cameraFocusPoint):
-    cam = bpy.data.cameras.new("Camera")
-    cam_ob = bpy.data.objects.new("Camera", cam)
-    bpy.context.collection.objects.link(cam_ob)
-    cam_ob.location = location
-    bpy.context.scene.camera = cam_ob
-    bpy.context.view_layer.objects.active = cam_ob
-    distance = getVectorNorm(location - focus)
-    update_camera(cam_ob, focus_point=focus, distance=distance)
-    return cam
+# def addCamera(location, focus=cameraFocusPoint):
+#     cam = bpy.data.cameras.new("Camera")
+#     cam_ob = bpy.data.objects.new("Camera", cam)
+#     bpy.context.collection.objects.link(cam_ob)
+#     cam_ob.location = location
+#     bpy.context.scene.camera = cam_ob
+#     bpy.context.view_layer.objects.active = cam_ob
+#     distance = getVectorNorm(location - focus)
+#     update_camera(cam_ob, focus_point=focus, distance=distance)
+#     return cam
 
 #V is the major circle coordinate, U is the minor circle
 
@@ -486,31 +453,31 @@ def addTorus(position, offset=-0.1):
     torus_obj.data.materials.append(materialMagenta)
     # torus_obj.show_transparent = True #  displays trans in viewport
 
-def addComicOutlineObject(obj):
-  #obj = context.object
-  mat = bpy.data.materials["Material"]
-  obj.data.materials.append(mat)
+#def addComicOutlineObject(obj):
+#  #obj = context.object
+#  mat = bpy.data.materials["Material"]
+#  obj.data.materials.append(mat)
 
-  mat.use_backface_culling = True
+#  mat.use_backface_culling = True
 
-  #remove surface
-  node_to_delete =  mat.node_tree.nodes['Principled BSDF']
-  mat.node_tree.nodes.remove( node_to_delete )
+#  #remove surface
+#  node_to_delete =  mat.node_tree.nodes['Principled BSDF']
+#  mat.node_tree.nodes.remove( node_to_delete )
 
-  #add solidifer outline
-  solidifier = obj.modifiers.new(name="Solidify", type='SOLIDIFY')
-  solidifier.thickness = -0.03
-  solidifier.use_flip_normals = True
-  solidifier.use_rim = False
+#  #add solidifer outline
+#  solidifier = obj.modifiers.new(name="Solidify", type='SOLIDIFY')
+#  solidifier.thickness = -0.03
+#  solidifier.use_flip_normals = True
+#  solidifier.use_rim = False
 
-  ## TBD
-  solidifier.material_offset = 1
-  # solidifier.material_offset_rim = 1
-  # bpy.ops.object.mode_set(mode='EDIT')
-  # bpy.ops.mesh.edge_split()
-  # bpy.ops.mesh.separate(type='LOOSE')
-  # bpy.ops.object.mode_set()
-  # bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY')
+#  ## TBD
+#  solidifier.material_offset = 1
+#  # solidifier.material_offset_rim = 1
+#  # bpy.ops.object.mode_set(mode='EDIT')
+#  # bpy.ops.mesh.edge_split()
+#  # bpy.ops.mesh.separate(type='LOOSE')
+#  # bpy.ops.object.mode_set()
+#  # bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY')
 
 
 ##https://blender.stackexchange.com/questions/157898/blender-2-8-python-how-do-i-find-my-material-output-node-and-assign-displacem
@@ -551,10 +518,6 @@ def addBezierCurve(name, N =20, thickness=0.02):
   curveObject.show_transparent = True
   return curveObject
 
-glass = MaterialGlass()
-def addMaterialGlass(obj):
-  return addMaterialToObject(obj, glass.material)
-
 def setBackgroundColor(color):
   world = bpy.context.scene.world
   if world is None:
@@ -565,40 +528,27 @@ def setBackgroundColor(color):
   bg.inputs[0].default_value[:3] = (color[0],color[1],color[2])
   bg.inputs[1].default_value = 0.0
 
-def addMaterialToObject(obj, material):
-  if obj.data.materials:
-      obj.data.materials[0] = material
-  else:
-      obj.data.materials.append(material)
-  obj.active_material = material
+# def addTextureMaterial(obj, material):
+#     if obj is None or obj.data is None:
+#       return
 
-def addMaterialColor(obj, color):
-  if obj is None or obj.data is None:
-    return
-  material = MaterialColor(color).material
-  addMaterialToObject(obj, material)
+#     # Assign it to object
+#     if obj.data.materials:
+#         obj.data.materials[0] = material
+#     else:
+#         obj.data.materials.append(material)
 
-def addTextureMaterial(obj, material):
-    if obj is None or obj.data is None:
-      return
+#     obj.active_material = material
 
-    # Assign it to object
-    if obj.data.materials:
-        obj.data.materials[0] = material
-    else:
-        obj.data.materials.append(material)
+#     bpy.ops.object.select_all(action='DESELECT')
+#     obj.select_set(True)
+#     bpy.ops.object.mode_set(mode='EDIT')
+#     bpy.ops.mesh.select_all(action='SELECT')
+#     bpy.ops.uv.smart_project()
+#     bpy.ops.object.mode_set(mode='OBJECT')
+#     bpy.ops.object.select_all(action='SELECT')
 
-    obj.active_material = material
-
-    bpy.ops.object.select_all(action='DESELECT')
-    obj.select_set(True)
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.uv.smart_project()
-    bpy.ops.object.mode_set(mode='OBJECT')
-    bpy.ops.object.select_all(action='SELECT')
-
-    # obj.editmode_toggle()
-    # bpy.ops.uv.smart_project(angle_limit=66, island_margin = 0.02)
-    # obj.editmode_toggle()
+#     # obj.editmode_toggle()
+#     # bpy.ops.uv.smart_project(angle_limit=66, island_margin = 0.02)
+#     # obj.editmode_toggle()
 

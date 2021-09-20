@@ -47,3 +47,21 @@ class MaterialColor():
     self.material.diffuse_color = (color[0],color[1],color[2],color[3])
     self.material.metallic = 0.3
     self.material.specular_intensity = 0.0
+
+glass = MaterialGlass()
+def addMaterialGlass(obj):
+  return addMaterialToObject(obj, glass.material)
+
+def addMaterialToObject(obj, material):
+  if obj.data.materials:
+      obj.data.materials[0] = material
+  else:
+      obj.data.materials.append(material)
+  obj.active_material = material
+
+def addMaterialColor(obj, color):
+  if obj is None or obj.data is None:
+    return
+  material = MaterialColor(color).material
+  addMaterialToObject(obj, material)
+

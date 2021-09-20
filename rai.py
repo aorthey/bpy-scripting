@@ -18,7 +18,7 @@ time_start_script = time.process_time()
 ########################################################
 # CUSTOM SETTINGS
 ########################################################
-Nsegments = -1 #display N segments. -1: display all segments
+Nsegments = 1 #display N segments. -1: display all segments
 NkeyframeSteps = 10 #use every n-th keyframe, interpolate inbetween
 
 renderAnimation = False
@@ -29,13 +29,21 @@ doZoomOut=False
 tPaddingEnd = 200 #number of frames to append after algorithms converged
 tZoomStart = 100
 tZoomOutDuration = 25
-tRotationStart = tZoomStart + 200
+tRotationStart = 50
 cameraLocation = Vector((-6,-12,+5))
 cameraFocusPoint = Vector((0,0,0))
 
-# folder = "data/anim/mobile/"
-# folder = "data/animations/all_robots/"
-folder = "data/anim/"
+###############################################################################
+## Mobile robots
+###############################################################################
+folder = "data/animations/mobile/"
+cameraLocation = Vector((-6,-12,+5))
+
+# folder = "data/anim/pandas/10/"
+# cameraLocation = Vector((-3,-6,+2))
+lightLocation = 0.3*(cameraLocation-cameraFocusPoint)+Vector((0,0,+5))
+# addLightSourceSun(lightLocation)
+addLightSourcePoint(lightLocation)
 
 filename = os.path.basename(os.path.dirname(folder))
 ########################################################
@@ -45,14 +53,8 @@ filename = os.path.basename(os.path.dirname(folder))
 rai = RaiLoader(folder)
 rai.generateKeyframesFromAnim(Nsegments, NkeyframeSteps)
 
-setBackgroundColor((.2,.2,.2))
+setBackgroundColor((.7,.7,.7))
 
-###############################################################################
-## LIGHTNING
-###############################################################################
-lightLocation = 0.3*(cameraLocation-cameraFocusPoint)+Vector((0,0,+5))
-# addLightSourceSun(lightLocation)
-addLightSourcePoint(lightLocation)
 
 ###############################################################################
 ## CAMERA

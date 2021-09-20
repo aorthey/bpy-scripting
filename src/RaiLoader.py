@@ -10,14 +10,19 @@ class RaiLoader():
 
   def __init__(self, foldername):
 
+  # def __init__(self, collada_fname, anim_fname):
+    # self.__init__(collada_fname, anim_fname)
+
+    collada_fname = os.path.abspath(foldername + "initial.dae")
+    anim_fname = foldername + "Anim.txt"
+    print(anim_fname)
+
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete()
 
-    fname = os.path.abspath(foldername + "initial.dae")
-    print(fname)
-    self.anim = Anim(foldername + "Anim.txt")
+    self.anim = Anim(anim_fname)
 
-    c = bpy.ops.wm.collada_import(filepath=fname, import_units=True, auto_connect=False)
+    c = bpy.ops.wm.collada_import(filepath=collada_fname, import_units=True, auto_connect=False)
 
     bpy.ops.object.select_all(action='SELECT')
 
