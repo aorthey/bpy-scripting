@@ -53,6 +53,8 @@ def addMaterialGlass(obj):
   return addMaterialToObject(obj, glass.material)
 
 def addMaterialToObject(obj, material):
+  if obj is None or obj.data is None:
+    return
   if obj.data.materials:
       obj.data.materials[0] = material
   else:

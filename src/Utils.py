@@ -525,8 +525,11 @@ def setBackgroundColor(color):
     world = new_world
   world.use_nodes = True
   bg = world.node_tree.nodes['Background']
-  bg.inputs[0].default_value[:3] = (color[0],color[1],color[2])
-  bg.inputs[1].default_value = 0.0
+  bg.inputs[0].default_value = (color[0],color[1],color[2],1.0)
+  bg.inputs[1].default_value = 0.1
+  world.color = (color[0],color[1],color[2])
+
+  # world = bpy.data.worlds["World"].node_tree.nodes['Background']
 
 # def addTextureMaterial(obj, material):
 #     if obj is None or obj.data is None:

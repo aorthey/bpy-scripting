@@ -8,8 +8,9 @@ from src.Utils import *
 
 class RaiLoader():
 
-  def __init__(self, foldername):
+  def __init__(self, foldername, obstacle_substring):
 
+    self.obstacle_substring = obstacle_substring
   # def __init__(self, collada_fname, anim_fname):
     # self.__init__(collada_fname, anim_fname)
 
@@ -88,7 +89,7 @@ class RaiLoader():
 
             # pattern = re.compile(r'^(b|node)[0-9]+')
             # if pattern.match(obj.name):
-            if '_' not in obj.name:
+            if self.obstacle_substring in obj.name:
               # print("Add glass material.")
               addMaterialGlass(obj)
             else:
