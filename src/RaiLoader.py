@@ -89,7 +89,7 @@ class RaiLoader():
 
             # pattern = re.compile(r'^(b|node)[0-9]+')
             # if pattern.match(obj.name):
-            if self.obstacle_substring in obj.name:
+            if self.obstacle_substring in obj.name or "floor" in obj.name:
               # print("Add glass material.")
               addMaterialGlass(obj)
             else:

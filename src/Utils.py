@@ -526,7 +526,7 @@ def setBackgroundColor(color):
   world.use_nodes = True
   bg = world.node_tree.nodes['Background']
   bg.inputs[0].default_value = (color[0],color[1],color[2],1.0)
-  bg.inputs[1].default_value = 0.1
+  bg.inputs[1].default_value = 1.0
   world.color = (color[0],color[1],color[2])
 
   # world = bpy.data.worlds["World"].node_tree.nodes['Background']

@@ -15,7 +15,7 @@ class RenderEngine():
   def __init__(self, config):
 
     self.time_start_script = time.process_time()
-    setBackgroundColor((.7,.7,.7))
+    setBackgroundColor((.1,.1,.1))
 
     self.folder = config["folder"]
     self.Nsegments = config["Nsegments"]
@@ -32,8 +32,8 @@ class RenderEngine():
     self.rai.generateKeyframesFromAnim(self.Nsegments, self.NkeyframeSteps)
 
     lightLocation = 0.3*(self.cameraLocation-self.cameraFocusPoint)+Vector((0,0,+5))
-    addLightSourceSun(lightLocation)
-    addLightSourcePoint(lightLocation)
+    # addLightSourceSun(lightLocation, 2)
+    addLightSourcePoint(lightLocation, 5000)
 
     ###############################################################################
     ## CAMERA SETUP
@@ -80,7 +80,7 @@ class RenderEngine():
   def LastFrameToPNG(self, filename):
     bpy.context.scene.frame_set(bpy.context.scene.frame_end)
     renderEngine = bpy.context.scene.render
-    renderEngine.film_transparent = True
+    # renderEngine.film_transparent = True
     renderEngine.image_settings.file_format = "PNG"
     renderEngine.image_settings.color_mode = 'RGBA'
     renderEngine.filepath = filename
@@ -97,7 +97,7 @@ class RenderEngine():
     renderEngine.ffmpeg.codec = "H264"
     renderEngine.ffmpeg.constant_rate_factor = "HIGH" #MEDIUM, LOW
     renderEngine.filepath = filename
-    renderEngine.film_transparent = True
+    # renderEngine.film_transparent = True
     print("Starting to render %d frames."% bpy.context.scene.frame_end)
     bpy.ops.render.render(animation=True)
 

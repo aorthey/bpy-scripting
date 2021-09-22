@@ -1,9 +1,9 @@
 import bpy
 
-def addLightSourceSun(location):
+def addLightSourceSun(location, energy=5):
   name = "light_source_sun_"+str(location)
   light_data = bpy.data.lights.new(name=name, type='SUN')
-  light_data.energy = 5
+  light_data.energy = energy
   light_data.angle = 5/180.0
   light_data.specular_factor = 0.8
   light_object = bpy.data.objects.new(name="light_2.80",
